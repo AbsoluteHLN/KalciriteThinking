@@ -56,8 +56,9 @@ pwsh -File scripts/sync-skill.ps1 -Target "$env:DSH_HOME\skills" -BoundaryPath .
 
 ```
 D:\Cetus\dshconfig\
-├─ PROJECT-BOUNDARY.md            <- 机器级边界值
+├─ PROJECT-BOUNDARY.md            <- 机器级边界值（也在 skills 根下，供 skill 就近解析）
 └─ skills\
+   ├─ PROJECT-BOUNDARY.md         <- sync 脚本安装的就近副本
    └─ kalcirite-project-rules\
-      └─ SKILL.md                 <- ../PROJECT-BOUNDARY.md 解析到这里
+      └─ SKILL.md                 <- 先找 ./PROJECT-BOUNDARY.md，再找机器配置根
 ```

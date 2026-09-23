@@ -2,7 +2,7 @@
 
 | Script | Purpose |
 |---|---|
-| `sync-skill.ps1` | Copy `skills/kalcirite-project-rules/` into an agent's skill root, and install a boundary file **only if none exists** (an existing boundary is never overwritten — it holds hand-filled machine values). |
+| `sync-skill.ps1` | Copy `skills/kalcirite-project-rules/` into an agent's skill root, and install a boundary file beside the skill (`<Target>\PROJECT-BOUNDARY.md`) **only if none exists** (an existing boundary is never overwritten — it holds hand-filled machine values). |
 
 ## Usage
 

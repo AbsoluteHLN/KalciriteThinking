@@ -56,7 +56,7 @@ pwsh -File scripts/sync-skill.ps1 -Target "$HOME\.claude\skills"
 # 其他 agent：把 -Target 指向它的 skill 目录
 ```
 
-规则正文使用相对链接（`../PROJECT-BOUNDARY.md`），复制到任何目录后依然有效。
+规则正文会从 skill 自身目录与机器配置根解析 `PROJECT-BOUNDARY.md`，因此安装到任何位置都仍然有效。
 
 ### B. 作为仓库指令文件
 

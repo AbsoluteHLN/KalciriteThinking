@@ -56,7 +56,7 @@ pwsh -File scripts/sync-skill.ps1 -Target "$HOME\.claude\skills"
 # Any other agent: point -Target at its skill directory
 ```
 
-The rule text uses relative links (`../PROJECT-BOUNDARY.md`), so it keeps working from any target directory.
+The rule text resolves `PROJECT-BOUNDARY.md` from the skill's own directory and from the machine config root, so it keeps working wherever the skill is installed.
 
 ### B. As a repository instruction file
 

@@ -7,12 +7,10 @@
     Copies skills/kalcirite-project-rules/ (SKILL.md plus any resources) into
     <Target>/kalcirite-project-rules/, overwriting an existing installation.
 
-    The rule text references ../PROJECT-BOUNDARY.md, so a boundary file should
-    exist one level above the installed skill directory:
-      - BoundaryPath installs to <Target>\..\PROJECT-BOUNDARY.md  (default layout)
-      - -BoundaryPath <file> installs that file to <Target>\..\PROJECT-BOUNDARY.md
-
-    Nothing is executed; the script only copies files.
+    The rule text resolves PROJECT-BOUNDARY.md from the skill's own directory,
+    then from the machine config root, so an installed boundary file goes
+    beside the skill: <Target>\PROJECT-BOUNDARY.md. An existing boundary file is
+    never overwritten — it holds hand-filled machine values.
 
 .PARAMETER Target
     Skill root the agent scans, e.g. D:\Cetus\dshconfig\skills or ~/.claude/skills.
@@ -21,7 +19,7 @@
     This repository's skills directory. Defaults to ..\skills relative to the script.
 
 .PARAMETER BoundaryPath
-    Optional boundary file to install one level above the skill root.
+    Optional boundary file to install beside the skill: <Target>\PROJECT-BOUNDARY.md.
 
 .PARAMETER Force
     Required to overwrite an existing installation when -WhatIf is not used.
@@ -76,7 +74,7 @@ if ($BoundaryPath) {
     if (-not (Test-Path -LiteralPath $BoundaryPath -PathType Leaf)) {
         throw "Boundary file not found: $BoundaryPath"
     }
-    $boundaryDest = Join-Path (Split-Path -Parent $Target) 'PROJECT-BOUNDARY.md'
+    $boundaryDest = Join-Path $Target 'PROJECT-BOUNDARY.md'
     if (Test-Path -LiteralPath $boundaryDest) {
         # Never clobber a live boundary file: it holds machine-specific values.
         Write-Host "kept existing boundary -> $boundaryDest"
@@ -90,7 +88,7 @@ if ($BoundaryPath) {
 Write-Host @"
 
 next steps
-  1. ensure a boundary file exists at: $(Join-Path (Split-Path -Parent $Target) 'PROJECT-BOUNDARY.md')
+  1. ensure a boundary file exists at: $(Join-Path $Target 'PROJECT-BOUNDARY.md')
   2. fill in DEP_CACHE / UI_SOURCE / TOOL_HOME / layout names / model provider
   3. reload the agent so the skill catalog picks the new directory up
 "@

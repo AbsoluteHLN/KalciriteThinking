@@ -6,14 +6,14 @@ metadata:
   version: "2.0"
   kind: "portable-rules"
   scope: "per-machine"
-  config: "../PROJECT-BOUNDARY.md"
+  config: "../PROJECT-BOUNDARY.md or PROJECT-BOUNDARY.md (resolved per §0.1)"
 ---
 
 # Kalcirite project rules (portable)
 
 A compact, agent-agnostic working discipline for **multi-project machines**: several repositories on one disk that must share one dependency cache, one UI foundation, one tool catalogue, and one predictable layout.
 
-Nothing here is tied to a vendor, an IDE, or a single agent product. Every machine-specific value — cache path, UI source path, tool home, project list — lives in [`PROJECT-BOUNDARY.md`](../PROJECT-BOUNDARY.md), which this document references as **the boundary file**. If that file is missing, the rules still hold; only the concrete paths must be resolved before use (§0.2).
+Nothing here is tied to a vendor, an IDE, or a single agent product. Every machine-specific value — cache path, UI source path, tool home, project list — lives in **the boundary file**, `PROJECT-BOUNDARY.md`, resolved per §0.1 (a project copy, a copy beside this skill, or the machine config root). If that file is missing, the rules still hold; only the concrete paths must be resolved before use.
 
 ---
 
@@ -21,9 +21,12 @@ Nothing here is tied to a vendor, an IDE, or a single agent product. Every machi
 
 ### 0.1 Resolution order for any path or value
 
-1. The current project's own boundary file / local overlay (`PROJECT-BOUNDARY.md`, `.kalcirite/boundary.md`, or the project's `AGENTS.md` section).
-2. The machine-level boundary file shipped with this skill.
-3. Domain defaults (in this document, written as `<PLACEHOLDER>`).
+The **boundary file** is `PROJECT-BOUNDARY.md`. Look for it in this order and use the first hit:
+
+1. The current project's own boundary file at the repository root (or the project's `AGENTS.md` / `.kalcirite/boundary.md` section).
+2. A copy beside this skill, at `PROJECT-BOUNDARY.md` in the skill's own directory — the layout the sync helper installs.
+3. The machine-level boundary file in the agent config root (`$DSH_HOME`, `~/.claude`, `~/.config/<agent>`, …).
+4. Domain defaults (in this document, written as `<PLACEHOLDER>`).
 
 Never invent a path, port, version, or tool name. **Verify before asserting**: existence first, then use.
 

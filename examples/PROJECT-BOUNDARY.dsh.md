@@ -4,11 +4,11 @@ Install shape produced by `scripts/sync-skill.ps1`:
 
 ```
 <DSH_HOME>\
-├─ PROJECT-BOUNDARY.md                       <- this file
-├─ skills\
-│  └─ kalcirite-project-rules\
-│     └─ SKILL.md                            <- ../PROJECT-BOUNDARY.md resolves here
-└─ settings.yaml
+├─ settings.yaml
+└─ skills\
+   ├─ PROJECT-BOUNDARY.md                    <- this file
+   └─ kalcirite-project-rules\
+      └─ SKILL.md                            <- resolves ./PROJECT-BOUNDARY.md, then the machine root
 ```
 
 ## settings.yaml — enabling cost-tiered delegation routing
