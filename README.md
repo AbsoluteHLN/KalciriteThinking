@@ -4,6 +4,10 @@
 
 [English](README.en.md) · [规则正文](skills/kalcirite-project-rules/SKILL.md) · [边界模板](PROJECT-BOUNDARY.md)
 
+## 声明
+
+我第一次实际去规范化这种技能，不确保适用于你的工作流，可以以此仅作参考！
+
 ## 组成
 
 | 层 | 文件 | 作用 |
