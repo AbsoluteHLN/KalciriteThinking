@@ -2,25 +2,55 @@
 
 | Script | Purpose |
 |---|---|
-| `sync-skill.ps1` | Copy `skills/kalcirite-project-rules/` into an agent's skill root, and install a boundary file beside the skill (`<Target>\PROJECT-BOUNDARY.md`) **only if none exists** (an existing boundary is never overwritten — it holds hand-filled machine values). |
+| `install-skill.ps1` | **Guided install.** Interviews the user for the machine paths and details (including the sub-agent / model-selection facts), copies the rule text, then writes the answers back into `<skill dir>\PROJECT-BOUNDARY.md` and into the `kalcirite:local-profile` block of the installed `SKILL.md`. |
+| `sync-skill.ps1` | **Rule-text update.** Copies the rule text over an existing installation and restores the local-profile block, so machine answers survive. Never asks questions, never rewrites the boundary file. |
 
-## Usage
+## Install (first time, or when the machine changes)
 
 ```powershell
-# preview
-& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -WhatIf
+# interview + install + write back
+& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills"
+& .\scripts\install-skill.ps1 -Target "$HOME\.claude\skills" -Reconfigure
 
-# install the skill + template boundary (skips an existing boundary)
-& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
+# non-interactive: reuse answers recorded in an existing boundary file
+& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -FromBoundary .\local\PROJECT-BOUNDARY.md
 
-# overwrite an existing installation after editing the rule text
-& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -Force
+# preview without writing
+& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -WhatIf
 ```
 
-Works in Windows PowerShell 5.1 and PowerShell 7+ (`pwsh` is optional; if it is on
-`PATH`, `pwsh -File scripts/sync-skill.ps1 …` is equivalent).
+Parameters: `-Target` (required), `-Source`, `-FromBoundary` (read answers from a generated
+boundary file), `-AnswerFile` (a `.psd1` hashtable), `-SkipInterview`, `-Reconfigure`, `-Force`,
+`-WhatIf`.
 
-Parameters: `-Target` (required, skill root), `-Source` (defaults to `..\skills\kalcirite-project-rules`),
-`-BoundaryPath` (optional), `-Force`, `-WhatIf`.
+Behaviour worth knowing:
 
-The script copies files only; it executes nothing from the repository.
+- Every path answer is checked with `Test-Path` as it is recorded; a missing path is either
+  created, written with `(unverified)`, or skipped through an explicit choice.
+- `none` / blank is a valid answer: it means "no assumption", and the rules stop and report for
+  that domain instead of guessing.
+- Re-running without `-Reconfigure` reads the existing answers back and only refreshes the files.
+- A hand-written boundary file (one without the `kalcirite:answers` block) is never overwritten
+  without `-Force`; generated ones get a `.bak` copy first.
+- The skill directory is managed: the script replaces it wholesale, so keep local edits to
+  `SKILL.md` out of it.
+
+## Update the rule text only
+
+```powershell
+& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -Force
+& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -WhatIf     # preview
+```
+
+Parameters: `-Target` (required), `-Source`, `-BoundaryPath` (first install only; an existing
+boundary is never overwritten), `-Force`, `-WhatIf`.
+
+## Notes
+
+- Both scripts work in Windows PowerShell 5.1 and PowerShell 7+ (`pwsh` is optional; when it is
+  on `PATH`, `pwsh -File scripts\<name>.ps1 …` is equivalent).
+- Both are deliberately **ASCII-only**: Windows PowerShell 5.1 misreads non-ASCII script files
+  that have no BOM. The questions themselves are documented, in Chinese, in
+  [`../boundary/QUESTIONS.md`](../boundary/QUESTIONS.md) — the agent-side interview (rule text
+  §0.2) asks the same set.
+- The scripts copy files only; they execute nothing from the repository.

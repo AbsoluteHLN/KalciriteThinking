@@ -2,20 +2,20 @@
 
 **适用于「一台机器、多个仓库」的通用 agent 工程纪律。**
 
-[English](README.en.md) · [规则正文](skills/kalcirite-project-rules/SKILL.md) · [边界模板](PROJECT-BOUNDARY.md)
+[English](README.en.md) · [规则正文](skills/kalcirite-project-rules/SKILL.md) · [边界模板](boundary/PROJECT-BOUNDARY.template.md)
 
 ## 声明
 
 我第一次实际去规范化这种技能，不确保适用于你的工作流，可以以此仅作参考！
 
-## 组成
+## 两层结构
 
-| 层 | 文件 | 作用 |
-|---|---|---|
-| 规则（可移植） | [`skills/kalcirite-project-rules/SKILL.md`](skills/kalcirite-project-rules/SKILL.md) | 纪律本体，与环境无关 |
-| 边界（机器相关） | [`PROJECT-BOUNDARY.md`](PROJECT-BOUNDARY.md) | 缓存路径、UI 源、工具库、目录名、模型提供方 |
-| 配置示例 | [`examples/`](examples/) | DSH / Claude 风格 skill 根、项目级覆盖示例 |
-| 同步脚本 | [`scripts/sync-skill.ps1`](scripts/sync-skill.ps1) | 把规则正文复制进任意 agent 的 skill 目录 |
+| 层 | 目录 | 内容 | 可否直接共享 |
+|---|---|---|---|
+| **通用层** | [`skills/`](skills/) [`boundary/`](boundary/) [`scripts/`](scripts/) [`examples/`](examples/) | 规则正文、边界模板与提问清单、安装脚本、示例 | 可以。不含任何私有路径 |
+| **本机层** | [`local/`](local/) | 本机写实边界值、项目专有事实 | **不要**。只作参考，不进别人的机器 |
+
+本机层的文件是**一份已经填好的答案**，不是规则的一部分。别人拿到的是通用层，然后用安装向导生成自己的本机层。
 
 ## 十条原则
 
@@ -30,28 +30,44 @@
 9. **有证据才算结论**：已验证 / 已尝试 / 未尝试，是三个不同的词。
 10. **事实靠实测**：路径、端口、版本先量后说。
 
-## 安装
+## 安装：先提问，再写回
+
+规则正文里没有任何硬编码路径。安装必须**先问清这台机器的细节**，再把答案写回本地技能内容 —— 这是保证智能的前提：宁可停下来问，也不要猜。
 
 ```powershell
-# A. 作为 agent skill（推荐）：复制进 agent 扫描的 skill 根
-& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
-& .\scripts\sync-skill.ps1 -Target "$HOME\.claude\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
+# 首次安装：交互式提问 → 复制规则 → 写回边界文件与本机档案块
+& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills"
+& .\scripts\install-skill.ps1 -Target "$HOME\.claude\skills"       # Claude 风格
 # 其他 agent：把 -Target 指向它的 skill 目录
 
-# B. 作为仓库指令文件：把需要的章节并入 AGENTS.md / CLAUDE.md / CONTRIBUTING.md
-# C. 作为人工检查清单：直接读 SKILL.md
+# 机器细节变了：重新提问
+& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -Reconfigure
+
+# 只更新规则正文（保留本机答案）
+& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -Force
 ```
 
-Windows PowerShell 5.1 与 PowerShell 7+ 均可运行。脚本只复制文件，不执行任何逻辑；规则正文会从 skill 自身目录与机器配置根解析 `PROJECT-BOUNDARY.md`。
+向导会问的六类事：
 
-## 配置
+1. **唯一依赖缓存**放在哪、子目录怎么分；
+2. **唯一 UI 上游**在哪、默认版本、预览源（没有就答 `none`）；
+3. **公共工具/插件库**在哪；
+4. **项目目录**名字（`src` / `docs` / `dev-docs` / `verify-evidence` / `cxbuild` / `temp`）；
+5. **成本分级模型路由**：授权的提供方与各档模型；
+6. **子代理与模型选用**：这台机器的宿主 agent 是什么、它暴露哪些委派工具、能否为子代理指定模型、开关在哪、何时生效、并发上限。
 
-1. 复制 `PROJECT-BOUNDARY.md` 到 agent 配置根。
-2. 填写 `DEP_CACHE`、`UI_SOURCE`、`TOOL_HOME`、目录名、授权模型提供方。
-3. 不适用的行直接删掉；留空会让规则**停下来报告**，而不是去猜。
-4. 单个仓库有例外时，加一份项目级 `PROJECT-BOUNDARY.md`，其效力高于机器级文件。
+问题清单与写法见 [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md)，子代理/模型选用的细节见 [`boundary/DELEGATION.md`](boundary/DELEGATION.md)。
 
-示例见 [`examples/`](examples/)。规则正文不含密钥、账号或私有路径——那些属于你的边界文件；若其中含内网主机名，请勿纳入版本控制。
+答案会写回两处：技能目录内的 `PROJECT-BOUNDARY.md`（就近解析，§0.1 第 2 顺位）和已安装 `SKILL.md` 里的 `local-profile` 块。**留空是合法答案**，含义是「不作假设」—— 规则会停下来报告，而不是去猜。项目级例外再放一份 `<项目根>/PROJECT-BOUNDARY.md`，效力最高。
+
+脚本在 Windows PowerShell 5.1 与 PowerShell 7+ 均可运行，只复制文件，不执行任何逻辑。用法见 [`scripts/README.md`](scripts/README.md)，示例见 [`examples/`](examples/)。
+
+## 其他用法
+
+- **作为仓库指令文件**：把需要的章节并入 `AGENTS.md` / `CLAUDE.md` / `CONTRIBUTING.md`。
+- **作为人工检查清单**：直接读 `SKILL.md`。
+
+规则正文不含密钥、账号或私有路径；若你的边界文件含内网主机名，请勿纳入版本控制。
 
 ## 许可
 

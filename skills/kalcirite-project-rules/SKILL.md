@@ -1,19 +1,27 @@
 ---
 name: kalcirite-project-rules
 description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, a single shared dependency cache (no per-project installs), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
-whenToUse: "Working in or delegating work inside a repository that shares a machine-level dependency cache, a canonical UI source, or a shared tool catalogue; installing/building dependencies; resetting or extending a UI; deciding where a reusable plugin or tool belongs; reorganizing project structure and build output; or delegating to cheaper models."
+whenToUse: "Working in or delegating work inside a repository that shares a machine-level dependency cache, a canonical UI source, or a shared tool catalogue; installing/building dependencies; resetting or extending a UI; deciding where a reusable plugin or tool belongs; reorganizing project structure and build output; or delegating to cheaper models. Also when adopting this skill on a new machine — that requires the §0.2 first-run interview before any work."
 metadata:
-  version: "2.0"
+  version: "3.0"
   kind: "portable-rules"
   scope: "per-machine"
-  config: "../PROJECT-BOUNDARY.md or PROJECT-BOUNDARY.md (resolved per §0.1)"
+  config: "PROJECT-BOUNDARY.md — project root, then this skill's directory, then the agent config root (§0.1)"
+  localProfile: "block between the kalcirite:local-profile markers below; empty means run the §0.2 interview first"
 ---
 
 # Kalcirite project rules (portable)
 
 A compact, agent-agnostic working discipline for **multi-project machines**: several repositories on one disk that must share one dependency cache, one UI foundation, one tool catalogue, and one predictable layout.
 
-Nothing here is tied to a vendor, an IDE, or a single agent product. Every machine-specific value — cache path, UI source path, tool home, project list — lives in **the boundary file**, `PROJECT-BOUNDARY.md`, resolved per §0.1 (a project copy, a copy beside this skill, or the machine config root). If that file is missing, the rules still hold; only the concrete paths must be resolved before use.
+Nothing here is tied to a vendor, an IDE, or a single agent product. Every machine-specific value — cache path, UI source path, tool home, project list — lives in **the boundary file**, `PROJECT-BOUNDARY.md`, resolved per §0.1. If that file is missing, the rules still hold; only the concrete paths must be resolved before use — and that is what the §0.2 interview is for.
+
+<!-- kalcirite:local-profile:begin -->
+## Local profile
+
+> **Empty — UNRESOLVED.** No machine values are recorded in this file yet.
+> Run the §0.2 interview (or `scripts/install-skill.ps1`, which asks the same questions) and write the answers back here before doing any work.
+<!-- kalcirite:local-profile:end -->
 
 ---
 
@@ -23,14 +31,41 @@ Nothing here is tied to a vendor, an IDE, or a single agent product. Every machi
 
 The **boundary file** is `PROJECT-BOUNDARY.md`. Look for it in this order and use the first hit:
 
-1. The current project's own boundary file at the repository root (or the project's `AGENTS.md` / `.kalcirite/boundary.md` section).
-2. A copy beside this skill, at `PROJECT-BOUNDARY.md` in the skill's own directory — the layout the sync helper installs.
-3. The machine-level boundary file in the agent config root (`$DSH_HOME`, `~/.claude`, `~/.config/<agent>`, …).
-4. Domain defaults (in this document, written as `<PLACEHOLDER>`).
+1. **Project root** — `<project>/PROJECT-BOUNDARY.md` (or a `PROJECT-BOUNDARY` section in the project's `AGENTS.md` / `.kalcirite/boundary.md`). Highest priority: a project may override any machine value.
+2. **This skill's own directory** — `PROJECT-BOUNDARY.md` next to this `SKILL.md`. The installer writes it here, so it travels with the skill.
+3. **Agent config root** — `$DSH_HOME/PROJECT-BOUNDARY.md`, `~/.claude/PROJECT-BOUNDARY.md`, `~/.config/<agent>/PROJECT-BOUNDARY.md`, …
+4. **The local profile block above**, if it has been filled in.
+5. **Domain defaults** — the fallbacks written in this document as `<PLACEHOLDER>`.
 
 Never invent a path, port, version, or tool name. **Verify before asserting**: existence first, then use.
 
-### 0.2 Placeholders
+### 0.2 First-run interview — required before any work
+
+**Gate.** If the boundary file is missing, still contains `<PLACEHOLDER>` or `<…>` tokens, or the local profile above says UNRESOLVED — **stop and interview the user first**. Do not edit, build, install, reorganise, or delete anything until the answers are written back. This document alone is not enough to work safely: it knows the rules, not the machine.
+
+Ask **in one batch**, in the user's language, each question carrying a **probed default** labelled *detected* (you read it) or *guess* (you did not).
+
+| # | Ask | Keys | How to probe | If the user leaves it blank |
+|---|---|---|---|---|
+| 1 | Which single directory do all dependencies install into? | `DEP_CACHE` (+ derived sub-keys) | workspace drive + `\dependency-cache`; `pnpm store path`; `npm config get cache` | **blocking** — no dependency work at all |
+| 2 | Keep the conventional sub-layout under it (`pnpm-store`, `npm-cache`, `pip-cache`, `cargo`, `electron\Cache`, `electron-builder\Cache`)? | derived | which sub-directories already exist | name each one individually |
+| 3 | Is there a canonical UI source (design system / component engine), and where? | `UI_SOURCE`, `UI_VERSION`, `UI_PREVIEW` | sibling `*ui*` / `ui-source` directories | record `none`; §4 degrades to "one UI source per project, and styling must still be tokenised" |
+| 4 | Is there a shared tool/plugin catalogue, and where? | `TOOL_HOME`, `TOOL_INDEX`, `TOOL_REGISTRY`, `TOOL_VALIDATOR` | sibling catalogue repo; `INDEX.md`, `registry.json`, `**/validate-*` | record `none`; §5 degrades to "search the project's own `tools/` first" |
+| 5 | Build output root, scratch root, evidence root, docs roots? | `BUILD_ROOT`, `TMP`, `EVIDENCE`, `DOCS`, `DEV_DOCS` | defaults `cxbuild/`, `temp/`, `verify-evidence/`, `docs/`, `dev-docs/` | use the defaults |
+| 6 | Which model provider is authorised, and what are its cheap model **ids** (not display names)? Plus the delegation facts: which sub-agent tools exist, can a delegation pick its own route, which setting enables that, when does it take effect, any concurrency limit? | `ROUTE_PROVIDER`, `CHEAP_MODELS`, `ROUTE_TOOL`, `HOST_AGENT`, `DELEGATION_TOOLS`, `ROUTE_SELECTION_SUPPORTED`, `ROUTE_ENABLE_SETTING`, `ROUTE_TAKES_EFFECT`, `CONCURRENCY_LIMIT` (see §2.5) | the agent's model settings / config file; the host's tool list | record `none` for each; delegation stays on the parent route and model selection is reported as unavailable (§2.3) |
+| 7 | What shell/OS constraints change command syntax? | `SHELL_NOTE` | `$PSVersionTable`, `Get-Command pwsh`, `bash` availability | assume nothing; re-ask when a command fails |
+| 8 | Proxy, fixed ports, and paths or data that must never be deleted? | `PROXY`, `PORTS`, `NEVER_DELETE` | project docs, config files, registry | record what is confirmed; mark the rest `(unverified)` |
+
+Interview rules:
+
+1. **Write the answers back before proceeding.** Prefer the **project root** (1) when the values are project-scoped, otherwise this skill's directory (2), then the config root (3). Also fill the local profile block above whenever this file is writable. An answer that lives only in the conversation is lost.
+2. **Verify every path as you record it**, with an existence check. A path that does not exist is written with `(unverified)`, never silently.
+3. **Blank is a legitimate answer.** Blank or `none` makes the rules *stop and report* for that domain; it never authorises guessing.
+4. **Re-ask when the environment changes** — a moved cache, a new UI source, a new provider, a new shell. Update the boundary file, not this rule text.
+5. If the user declines to answer, state which domains are now unrouted, and keep working only in domains that need no boundary value.
+6. **Do not interview twice.** If a filled boundary file already exists, read it and proceed; ask only about values that are new, stale, or contradictory.
+
+### 0.3 Placeholders
 
 | Placeholder | Meaning | Default fallback |
 |---|---|---|
@@ -41,12 +76,13 @@ Never invent a path, port, version, or tool name. **Verify before asserting**: e
 | `<TMP>` | Per-project scratch directory | `temp/` |
 | `<EVIDENCE>` | Per-project verification evidence directory | `verify-evidence/` |
 
-### 0.3 Non-negotiables
+### 0.4 Non-negotiables
 
 - **Build first, verify once.** Do not loop build→verify→build.
 - **No per-project dependency installs.** One cache, linked in.
 - **Reuse before rebuild.** UI and tools are found, not re-invented.
 - **No claim without evidence.** Unobserved capability is unverified capability.
+- **No work before the machine is known.** Interview first (§0.2), then act.
 
 ---
 
@@ -84,9 +120,12 @@ Spend the expensive model on judgement, not on reading. Route work by **required
 
 ### 2.3 Preconditions are real (check, do not assume)
 
-In DSH, the delegation tool only exposes `provider` / `model` / `reasoning_effort` when the session was composed with a `subagent-model-selection` preference (`enabled: true` + a non-empty `allowedModels` list). That policy is read **when the session is created** and is inherited by children; editing settings later does not change a running or restored session.
+Whether you can choose a model at all, where the switch lives, and when it takes effect are **host facts, not rule facts** — they belong in the boundary file (§2.5). Treat "the session exposes `provider` / `model`" as a hypothesis to verify, not a default.
 
-If the fields are not available: **do not fabricate them**. Delegate on the inherited route, or do the work inline, and state that model selection was unavailable.
+- **Verify before delegating with a route.** If the delegation tool does not offer the field, the capability does not exist for this session.
+- **If the fields are not available: do not fabricate them.** Delegate on the inherited route, or do the work inline, and state that model selection was unavailable.
+- **Enablement usually applies at session creation.** Many hosts read the routing policy once and inherit it into children, so editing settings mid-session changes nothing for the running session. Open a new session instead of pretending.
+- **Worked example (DSH).** `subagent` / `subagent_fork` expose `provider` / `model` / `reasoning_effort` plus `list_subagent_models` only when the session was composed with `subagent-model-selection: {enabled: true, allowedModels: [...]}`; that policy is recorded at session creation and inherited by children, and restored sessions keep the policy they recorded. `subagent_fork` deliberately stays on the parent route (KV-cache reuse) even when the fields are available.
 
 ### 2.4 Session handoff protocol
 
@@ -107,6 +146,22 @@ Rules:
 - **Return format**: execution summary, changed-file list, evidence paths, open questions, what the child could not verify.
 - **Human handoff** (new session or another person): current state, files changed, evidence paths, next step. Not a narrative of the process.
 - Run independent delegations in parallel; wait in the foreground only when the next action depends on the result.
+
+### 2.5 Delegation and model selection are host-specific — interview them
+
+**Sub-agent creation and route selection are not universal.** The tools differ between hosts, and whether a delegation may name its own model is a property of *that* host, not of this rule text. So these are interview subjects (§0.2) and boundary values, exactly like cache paths:
+
+| Boundary key | Ask | Why it changes behaviour |
+|---|---|---|
+| `HOST_AGENT` | Which agent / harness is this, and which version? | decides which equivalent wording applies |
+| `DELEGATION_TOOLS` | Which delegation tools exist, and how do they differ? | a fresh-context child and a fork of the parent conversation receive and return different things |
+| `ROUTE_SELECTION_SUPPORTED` | Can a delegation name its own provider / model? | if not, either do the work inline or accept the inherited route — do not pretend |
+| `ROUTE_TOOL` | How are the available routes discovered? | discover, never guess |
+| `ROUTE_ENABLE_SETTING` | Which setting enables route selection? | tells the user the exact place to change |
+| `ROUTE_TAKES_EFFECT` | When does that change take effect — new session, restart, immediately? | decides whether to open a new session or just retry |
+| `CONCURRENCY_LIMIT` | Any concurrency or budget ceiling? | parallel fan-out must respect it |
+
+**Absence of a record means "not supported."** Fall back to the inherited route, say so in the report, and never invent `provider` / `model` fields. A generic walkthrough and the DSH specifics are in `boundary/DELEGATION.md` in the source repository.
 
 ---
 
@@ -254,6 +309,7 @@ Rules:
 
 ## 10. Red lines
 
+- **Starting any edit, build, install, or deletion while the boundary is unresolved** — `<PLACEHOLDER>` tokens still present, no boundary file, or an empty local profile block. Interview first (§0.2).
 - Installing dependencies inside a project, or fetching from the network when the cache could satisfy the closure.
 - Deleting a linked dependency directory, or running a "clean" command against cache-backed artifacts.
 - Copying or creating dependency payloads inside any project.

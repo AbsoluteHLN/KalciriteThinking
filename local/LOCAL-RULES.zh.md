@@ -1,10 +1,12 @@
 # 本机项目规则（KalciriteThinking 中文本地版）
 
-> 本文件是 [`skills/kalcirite-project-rules/SKILL.md`](skills/kalcirite-project-rules/SKILL.md) 的中文同义版本，
+> 本文件是 [`../skills/kalcirite-project-rules/SKILL.md`](../skills/kalcirite-project-rules/SKILL.md) 的中文同义版本，
 > 并把本机边界值（`DEP_CACHE`、`UI_SOURCE`、`TOOL_HOME`、目录名、模型路由）就地写实。
 >
 > **给本机 agent 用**：把本文件与英文规则一起加载；两者冲突时以本文件为准（本机实测口径 > 通用文本）。
 > 换机器时只改「§B 本机边界值」，规则正文不动。
+>
+> 本文件属于**本机层**（见 [`README.md`](README.md)）：通用层 `skills/`、`boundary/`、`scripts/` 可以直接给别人，本文件不行。
 
 ---
 
@@ -35,6 +37,19 @@
 | `BUILD_ROOT` / `TMP` / `EVIDENCE` | `cxbuild/` / `temp/` / `verify-evidence/` |
 | 授权模型提供方 | `csu`（模型 id：`GLM`、`DeepSeek`、`Qwen`；显示名与 id 不同，路由用 id） |
 | 委派路由开关 | `settings.yaml` 的 `subagent-model-selection: {enabled: true, allowedModels: [...]}`，**会话创建时**读取并被子代理继承 |
+
+### 子代理与模型选用（§5.1）
+
+| 项 | 本机值 |
+|---|---|
+| `HOST_AGENT` | DeepSeek Harness（DSH） |
+| `DELEGATION_TOOLS` | `subagent`、`subagent_fork` |
+| `ROUTE_SELECTION_SUPPORTED` | `none` —— 当前 `settings.yaml` 未启用该命名空间，字段未暴露 |
+| `ROUTE_ENABLE_SETTING` | `settings.yaml` → `subagent-model-selection: {enabled, allowedModels}` |
+| `ROUTE_TOOL` | `list_subagent_models`（启用后出现） |
+| `ROUTE_TAKES_EFFECT` | 新会话（已在会话继承开关；恢复的会话保持原策略） |
+| `CONCURRENCY_LIMIT` | 未记录（不设上限假设） |
+| 例外 | `subagent_fork` 复用父会话路由，**不接受**模型指定 |
 | 本机 skill 根 | `D:\Cetus\dshconfig\skills`（即 `$env:DSH_HOME\skills`） |
 | 本机 shell 说明 | PATH 上只有 Windows PowerShell 5.1（`pwsh` 不可用）：脚本用 `& .\scripts\xxx.ps1` 或 `powershell -File` 调用 |
 
@@ -71,16 +86,20 @@
 ## §E 同步到 agent
 
 ```powershell
-& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
+# 首次安装 / 改边界值：向导提问并写回
+& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -FromBoundary .\local\PROJECT-BOUNDARY.md
+
+# 只更新规则正文：保留已填答案
+& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -Force
 ```
 
 同步后本机 skill 根下的结构：
 
 ```
 D:\Cetus\dshconfig\
-├─ PROJECT-BOUNDARY.md            <- 机器级边界值（也在 skills 根下，供 skill 就近解析）
 └─ skills\
-   ├─ PROJECT-BOUNDARY.md         <- sync 脚本安装的就近副本
+   ├─ PROJECT-BOUNDARY.md                    <- 旧口径的机器级副本（脚本会迁进 skill 目录）
    └─ kalcirite-project-rules\
-      └─ SKILL.md                 <- 先找 ./PROJECT-BOUNDARY.md，再找机器配置根
+      ├─ SKILL.md                            <- 含 kalcirite:local-profile 块（本机值，随技能走）
+      └─ PROJECT-BOUNDARY.md                 <- 就近边界文件（§0.1 第 2 顺位）
 ```
