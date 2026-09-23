@@ -27,16 +27,38 @@
 |---|---|
 | `DEP_CACHE` | `E:\dependency-cache`（索引 `INDEX.md`、规则 `DEPENDENCY-BOUNDARY.md`） |
 | 包管理器指向 | `store-dir` / `virtualStoreDir` 钉在 workspace 配置；`node_modules` 为 junction；`CARGO_HOME`、`PIP_CACHE_DIR`、`npm_config_cache`、`ELECTRON_*` 指向缓存 |
+| 缓存内只读区 | `archive\`、`legacy-stores\`、`quarantine\` |
 | `UI_SOURCE` | `E:\Projects\KalciriteUI\ui-source`（预览工作台 `artist-Paralos-main`） |
-| `UI_DEFAULT_VERSION` | 最新稳定版（当前 v2.5，其次 v2.3） |
+| `UI_DEFAULT_VERSION` | 最新稳定版（当前 v2.5，其次 v2.3；v1 仅在需要柔和玻璃风格时用） |
 | `TOOL_HOME` | `E:\KalciriteTools`（索引 `INDEX.md`、注册表 `registry.json`） |
 | `TOOL_VALIDATOR` | `& 'E:\dependency-cache\node-runtime\node.exe' 'E:\KalciriteTools\ops-tools\validate-kalcirite-registry.mjs'` |
 | `BUILD_ROOT` / `TMP` / `EVIDENCE` | `cxbuild/` / `temp/` / `verify-evidence/` |
 | 授权模型提供方 | `csu`（模型 id：`GLM`、`DeepSeek`、`Qwen`；显示名与 id 不同，路由用 id） |
-| 委派路由开关 | `settings.yaml` 的 `subagent-model-selection: {enabled: true, allowedModels: [...]}`，会话创建时读取 |
+| 委派路由开关 | `settings.yaml` 的 `subagent-model-selection: {enabled: true, allowedModels: [...]}`，**会话创建时**读取并被子代理继承 |
 | 本机 skill 根 | `D:\Cetus\dshconfig\skills`（即 `$env:DSH_HOME\skills`） |
+| 本机 shell 说明 | PATH 上只有 Windows PowerShell 5.1（`pwsh` 不可用）：脚本用 `& .\scripts\xxx.ps1` 或 `powershell -File` 调用 |
 
-## §C 红线
+## §C 项目专有事实（仅适用于对应仓库）
+
+### Taskasion（`E:\Projects\Taskasion`）
+
+| 项 | 值 |
+|---|---|
+| 固定端口 | `14410` Vite dev server（`strictPort`）、`14411` core REST（仅回环）——三处必须一致：`src/api.ts`、`tauri.conf.json` CSP、`main.rs` CORE_PORT |
+| 用户数据（永不删改） | exe 同级 `data\`（`todo.md` / `goals.md` / `audit.jsonl`）；独立运行默认 `%USERPROFILE%\.taskasion`，可用 `TASKASION_DATA_DIR` 覆盖 |
+| 运行中的 widget | 重建前 `taskkill //F //IM Taskasion.exe`，重建后 `Start-Process <exe>`（exe 被锁会 `os error 5`） |
+| 构建产物路径例外 | 旧口径 `build\cargo-target\`、`build\Taskasion-<ver>-portable.zip`、`dist\`：**仅**为兼容既有发布流程保留；新任务一律走 `cxbuild\` |
+
+### 本机网络
+
+| 项 | 值 |
+|---|---|
+| 直连可用 | `api.github.com` |
+| 常被 TLS 重置 | `objects.githubusercontent.com`、`release-assets.githubusercontent.com` → 用系统代理 |
+| 系统代理 | `http://127.0.0.1:7897`（WinINET；Rust 侧从注册表读同一地址） |
+| 打包纪律 | 发布 zip 一律 PowerShell `Compress-Archive`（Git Bash tar 中文名编码已坏） |
+
+## §D 红线
 
 - 在项目内安装依赖、联网拉依赖，或删除 `node_modules` / 执行 `cargo clean`。
 - 把依赖实体复制或新建进任何项目目录。
@@ -46,10 +68,10 @@
 - 凭记忆断言路径/端口/版本。
 - 声称"已验证"却拿不出 `verify-evidence/` 里的输出。
 
-## §D 同步到 agent
+## §E 同步到 agent
 
 ```powershell
-pwsh -File scripts/sync-skill.ps1 -Target "$env:DSH_HOME\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
+& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
 ```
 
 同步后本机 skill 根下的结构：

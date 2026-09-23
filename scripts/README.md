@@ -8,14 +8,17 @@
 
 ```powershell
 # preview
-pwsh -File scripts/sync-skill.ps1 -Target "$env:DSH_HOME\skills" -WhatIf
+& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -WhatIf
 
 # install the skill + template boundary (skips an existing boundary)
-pwsh -File scripts/sync-skill.ps1 -Target "$env:DSH_HOME\skills" -BoundaryPath ..\PROJECT-BOUNDARY.md
+& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
 
 # overwrite an existing installation after editing the rule text
-pwsh -File scripts/sync-skill.ps1 -Target "$env:DSH_HOME\skills" -Force
+& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -Force
 ```
+
+Works in Windows PowerShell 5.1 and PowerShell 7+ (`pwsh` is optional; if it is on
+`PATH`, `pwsh -File scripts/sync-skill.ps1 …` is equivalent).
 
 Parameters: `-Target` (required, skill root), `-Source` (defaults to `..\skills\kalcirite-project-rules`),
 `-BoundaryPath` (optional), `-Force`, `-WhatIf`.

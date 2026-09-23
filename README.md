@@ -50,11 +50,13 @@ Copy `skills/kalcirite-project-rules/` into the skill root your agent scans, the
 
 ```powershell
 # DSH (DeepSeek Harness): user skill root
-pwsh -File scripts/sync-skill.ps1 -Target "$env:DSH_HOME\skills"
+& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
 # Claude-Code-style skill root
-pwsh -File scripts/sync-skill.ps1 -Target "$HOME\.claude\skills"
+& .\scripts\sync-skill.ps1 -Target "$HOME\.claude\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
 # Any other agent: point -Target at its skill directory
 ```
+
+Works in Windows PowerShell 5.1 and PowerShell 7+.
 
 The rule text resolves `PROJECT-BOUNDARY.md` from the skill's own directory and from the machine config root, so it keeps working wherever the skill is installed.
 

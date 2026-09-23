@@ -50,11 +50,13 @@ KalciriteThinking 把这些边界写成**任何 agent 都能加载**的规则：
 
 ```powershell
 # DSH（DeepSeek Harness）用户 skill 根
-pwsh -File scripts/sync-skill.ps1 -Target "$env:DSH_HOME\skills"
+& .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
 # Claude 风格 skill 根
-pwsh -File scripts/sync-skill.ps1 -Target "$HOME\.claude\skills"
+& .\scripts\sync-skill.ps1 -Target "$HOME\.claude\skills" -BoundaryPath .\PROJECT-BOUNDARY.md
 # 其他 agent：把 -Target 指向它的 skill 目录
 ```
+
+Windows PowerShell 5.1 与 PowerShell 7+ 均可运行。
 
 规则正文会从 skill 自身目录与机器配置根解析 `PROJECT-BOUNDARY.md`，因此安装到任何位置都仍然有效。
 
