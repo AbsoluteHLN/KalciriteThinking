@@ -1,0 +1,14 @@
+# scratch
+temp/
+*.tmp
+*.log
+
+# built output of this repository (documents only)
+dist/
+.cxbuild/
+
+# editors / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
