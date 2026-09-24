@@ -7,6 +7,32 @@ changed, so a version bump is never the only signal.
 Versioning is on the **portable rule text**, not on the repository: a layout change
 or a README rewrite does not move it, a change to the discipline does.
 
+## 3.2
+
+**The portable layer is self-contained.** An installed skill copy had five
+repository-relative paths in it — `scripts/export-boundary.ps1`,
+`scripts/install-skill.ps1`, `boundary/MACHINE-CONFIG.template.md`,
+`boundary/DELEGATION.md`, `boundary/hosts/CONTRACT.md` — which dangle the moment
+the skill is installed on its own. The rule text was violating its own §0.1:
+never hard-code a path, resolve it from the machine's document instead.
+
+- **`boundary/hosts/CONTRACT.md` → `reference/host-adapters.md`.** The adapter
+  contract is host-agnostic and belongs with the portable text, so it now ships
+  with the skill and is installed alongside the other reference pages. Host
+  *bindings* stay in the repository under `boundary/hosts/`.
+- **`boundary/DELEGATION.md` removed.** Its generic half (how to record routing
+  on any host) is now in `reference/delegation.md`; its DSH half (validation, when
+  the policy is read, what is exposed, the `subagent_fork` exception, id-vs-display
+  -name, behaviour when off) is a table in `boundary/hosts/dsh.md`. What remained
+  was a second copy of the question table.
+- **Repository paths are named, not linked.** `SKILL.md`, `reference/interview.md`
+  and `reference/ui-and-tools.md` now refer to the exporter, the installer and the
+  config template by role, with the concrete location recorded in §0 of the
+  machine-config document. A rule from `SKILL.md`: every path a portable file
+  names must ship inside the skill directory.
+- **`reference/` index.** `SKILL.md` frontmatter and the reading footer list all
+  five reference pages.
+
 ## 3.1
 
 **Rule text: 16 KB, procedures on demand.** `SKILL.md` had grown into a reference

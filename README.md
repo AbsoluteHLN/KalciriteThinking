@@ -32,9 +32,9 @@
 
 | 路径 | 内容 |
 |---|---|
-| [`skill/kalcirite-project-rules/`](skill/kalcirite-project-rules/) | 规则正文 `SKILL.md`；细节拆到 `reference/`（入职问卷、委派与模型选用、依赖缓存、UI 与工具库） |
-| [`boundary/`](boundary/) | 通用层的边界资料：配置模板、提问清单、委派说明、项目级示例 |
-| [`boundary/hosts/`](boundary/hosts/) | 宿主适配器：[契约](boundary/hosts/CONTRACT.md) 与 [DSH 绑定](boundary/hosts/dsh.md) |
+| [`skill/kalcirite-project-rules/`](skill/kalcirite-project-rules/) | 规则正文 `SKILL.md`；细节拆到 `reference/`（入职问卷、委派与模型选用、依赖缓存、UI 与工具库、宿主适配器契约） |
+| [`boundary/`](boundary/) | 通用层的边界资料：配置模板、提问清单、项目级示例 |
+| [`boundary/hosts/`](boundary/hosts/) | 已落地的宿主绑定：[DSH](boundary/hosts/dsh.md)；宿主必须实现什么由规则正文的 `reference/host-adapters.md` 规定 |
 | [`scripts/`](scripts/) | 导出器与安装/同步脚本，用法见 [`scripts/README.md`](scripts/README.md) |
 | [`CHANGELOG.md`](CHANGELOG.md) | 规则正文的版本历史；`sync-skill.ps1` 会打印版本差 |
 
@@ -75,7 +75,7 @@ Copy-Item .\boundary\MACHINE-CONFIG.template.md ..\MACHINE-CONFIG.md
 
 安装脚本**没有交互模式**：交互这件事属于 agent，规则正文 §0.2 规定了它的入口和问法。若既没给 `-FromBoundary`、目标位置也没有现成的边界文件，脚本会停下来并打印上面那三条命令。
 
-它填的 `MACHINE-CONFIG.md` 有八节：宿主与环境、依赖缓存、UI 上游、工具库、目录契约、模型路由、子代理与委派、项目专有例外。问题清单与写法见 [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md)，子代理/模型选用的细节见 [`boundary/DELEGATION.md`](boundary/DELEGATION.md) 与 [`reference/delegation.md`](skill/kalcirite-project-rules/reference/delegation.md)。
+它填的 `MACHINE-CONFIG.md` 有八节：宿主与环境、依赖缓存、UI 上游、工具库、目录契约、模型路由、子代理与委派、项目专有例外。问题清单与写法见 [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md)，子代理/模型选用的细节见 [`reference/delegation.md`](skill/kalcirite-project-rules/reference/delegation.md)（通用记法）与 [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md)（DSH 实测答案）。
 
 答案会写回两处：技能目录内的 `PROJECT-BOUNDARY.md`（就近解析，§0.1 第 2 顺位）和已安装 `SKILL.md` 里的 `local-profile` 块。**留空是合法答案**，含义是「不作假设」—— 规则会停下来报告，而不是去猜。项目级例外再放一份 `<项目根>/PROJECT-BOUNDARY.md`，效力最高。
 
@@ -95,7 +95,9 @@ Copy-Item .\boundary\MACHINE-CONFIG.template.md ..\MACHINE-CONFIG.md
 - **只拦截尚不存在的路径**，接管遗留项目不会误伤。
 - **没配置就不放行**：边界文件缺失或 `DEP_CACHE` 为空时，写入与安装类命令会被硬挡，直到按 §0.2 回答完问卷。
 
-**分工**：技能正文给规则与解析顺序（跨 agent 通用），适配器负责注入与拦截（宿主专有）。这份分工是一份可实现的契约，见 [`boundary/hosts/CONTRACT.md`](boundary/hosts/CONTRACT.md)；本机已落地的绑定见 [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md)。其他宿主可照同样分工自建。
+**分工**：技能正文给规则与解析顺序（跨 agent 通用），适配器负责注入与拦截（宿主专有）。这份分工是一份可实现的契约，随规则正文一起发布，见 [`reference/host-adapters.md`](skill/kalcirite-project-rules/reference/host-adapters.md)；本机已落地的绑定见 [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md)。其他宿主可照同样分工自建。
+
+**一条硬约束**：`skill/` 下的文件是会被单独安装出去的便携层，因此只能引用同目录内的文件。规则仓库自己的路径（导出器、安装器、模板、宿主绑定）一律**按名字**提到，真实位置写进本机配置文档 §0 —— 这也正是规则正文 §0.1 对自己的要求。
 
 ## 其他用法
 

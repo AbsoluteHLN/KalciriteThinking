@@ -32,9 +32,9 @@ The local documents are *a filled-in answer sheet*, not part of the rules.
 
 | Path | Contents |
 |---|---|
-| [`skill/kalcirite-project-rules/`](skill/kalcirite-project-rules/) | The rule text `SKILL.md`; depth moved into `reference/` (interview, delegation and model selection, dependency cache, UI and tool catalogue) |
-| [`boundary/`](boundary/) | Portable-side boundary material: config template, question bank, delegation notes, per-project examples |
-| [`boundary/hosts/`](boundary/hosts/) | Host adapters: the [contract](boundary/hosts/CONTRACT.md) and the [DSH binding](boundary/hosts/dsh.md) |
+| [`skill/kalcirite-project-rules/`](skill/kalcirite-project-rules/) | The rule text `SKILL.md`; depth moved into `reference/` (interview, delegation and model selection, dependency cache, UI and tool catalogue, host-adapter contract) |
+| [`boundary/`](boundary/) | Portable-side boundary material: config template, question bank, per-project examples |
+| [`boundary/hosts/`](boundary/hosts/) | Shipped host bindings: [DSH](boundary/hosts/dsh.md); what any host must implement is specified by `reference/host-adapters.md` in the rule text |
 | [`scripts/`](scripts/) | The exporter and the install/sync scripts; usage in [`scripts/README.md`](scripts/README.md) |
 | [`CHANGELOG.md`](CHANGELOG.md) | Version history of the rule text; `sync-skill.ps1` prints the delta |
 
@@ -75,7 +75,7 @@ Copy-Item .\boundary\MACHINE-CONFIG.template.md ..\MACHINE-CONFIG.md
 
 The installer has **no interactive mode**: the interview belongs to the agent, and rule text §0.2 defines its entry point and its questions. With no `-FromBoundary` and no boundary already installed, it stops and prints the three commands above.
 
-The `MACHINE-CONFIG.md` you fill in has eight sections: host and environment, dependency cache, UI source, tool catalogue, layout contract, model routing, sub-agents and delegation, and project-specific exceptions. The question bank is in [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md); the sub-agent / model-selection details are in [`boundary/DELEGATION.md`](boundary/DELEGATION.md) and [`reference/delegation.md`](skill/kalcirite-project-rules/reference/delegation.md).
+The `MACHINE-CONFIG.md` you fill in has eight sections: host and environment, dependency cache, UI source, tool catalogue, layout contract, model routing, sub-agents and delegation, and project-specific exceptions. The question bank is in [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md); the sub-agent / model-selection details are in [`reference/delegation.md`](skill/kalcirite-project-rules/reference/delegation.md) (generic recording) and [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md) (the measured DSH answers).
 
 Answers land in two places: `PROJECT-BOUNDARY.md` inside the skill directory (nearest-hit resolution, §0.1 rule 2) and the `local-profile` block inside the installed `SKILL.md`. **Blank is a valid answer** meaning "no assumption" — the rules stop and report instead of guessing. A per-project `<project>/PROJECT-BOUNDARY.md` wins over both.
 
@@ -95,7 +95,9 @@ A skill is a document: it is read once and decays across long sessions and compa
 - **Only paths that do not exist yet are ever flagged**, so adopting a legacy project is never blocked.
 - **Unconfigured means no passage**: a missing boundary file or an empty `DEP_CACHE` hard-blocks writes and install-like commands until §0.2 has been answered.
 
-**The split**: the skill text carries the rules and their resolution order (portable across agents); the adapter carries injection and interception (host-specific). That split is a contract another host can implement, written out in [`boundary/hosts/CONTRACT.md`](boundary/hosts/CONTRACT.md); the binding shipped for my machine is in [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md).
+**The split**: the skill text carries the rules and their resolution order (portable across agents); the adapter carries injection and interception (host-specific). That split is a contract another host can implement, shipped with the rule text as [`reference/host-adapters.md`](skill/kalcirite-project-rules/reference/host-adapters.md); the binding shipped for my machine is in [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md).
+
+**One hard constraint**: files under `skill/` are the portable layer that gets installed on its own, so they may only reference files inside that directory. The rules repository's own paths (exporter, installer, template, host bindings) are referred to **by name**, with the real location recorded in §0 of the machine-config document — which is exactly what the rule text's own §0.1 demands of itself.
 
 ## Other ways to use it
 

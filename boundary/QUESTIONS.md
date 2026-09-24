@@ -45,5 +45,7 @@ agent 侧的执行规则（什么时候问、一次问完、写回哪里、留�
 缓存搬家、换 UI 上游、换模型提供方、换 shell、换仓库布局——**更新机器配置文档并重新导出**，
 不要改规则正文。规则正文保持与环境无关；两次访谈之间只需要改这一份文档。
 
-宿主相关的细节（委派工具、能否选模型、何时生效）见 [`DELEGATION.md`](DELEGATION.md)；
-给新宿主写适配器的契约见 [`hosts/CONTRACT.md`](hosts/CONTRACT.md)。
+宿主相关的细节（委派工具、能否选模型、何时生效）见 [`dsh.md`](hosts/dsh.md) 与
+[`reference/delegation.md`](../skill/kalcirite-project-rules/reference/delegation.md)；
+给新宿主写适配器的契约随规则正文一起发布，见
+[`reference/host-adapters.md`](../skill/kalcirite-project-rules/reference/host-adapters.md)。

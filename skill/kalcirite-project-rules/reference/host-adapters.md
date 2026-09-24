@@ -1,9 +1,9 @@
 # Boundary adapter contract
 
-Read this when: writing an adapter for a host that is not DSH, reviewing what an
-adapter is allowed to assume, or deciding whether a host needs one at all.
+Read this when: writing an adapter for a host, reviewing what an adapter is allowed
+to assume, or deciding whether a host needs one at all.
 
-The rule text (`skill/kalcirite-project-rules/SKILL.md`) is the **portable half**:
+The rule text (`SKILL.md`, one level up) is the **portable half**:
 judgement, ordering, and the discipline. It is read once and then decays, because
 nothing reacts to a misplaced file. An **adapter** is the host-specific half that
 makes the discipline mechanical.
@@ -135,9 +135,11 @@ the second.
 
 ## 6. Shipped bindings
 
-| Host | Binding | Notes |
-|---|---|---|
-| DSH (DeepSeek Harness) | [`dsh.md`](dsh.md) | reference implementation; lives in the shared tool catalogue as `agent-adapters/dsh-kalcirite-boundary` |
+A **binding** document is written per host and lives in the rules repository — never
+inside the installed skill, and never in `SKILL.md`. The repository's location is
+recorded in §0 of the machine-config document. The binding shipped today is the DSH
+reference implementation; the adapter code itself lives in the shared tool catalogue
+as `agent-adapters/dsh-kalcirite-boundary`.
 
 A binding document should state: where the boundary is read from, how injection
 is installed, which tools are intercepted, how the mode is set, and how to prove

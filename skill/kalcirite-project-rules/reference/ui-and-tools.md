@@ -93,6 +93,7 @@ that host gets an **adapter** — the host-specific half of the same discipline.
 - An adapter may refuse a write that would break the layout, and must say which
   rule and which key it used.
 - The adapter contract (what any host must implement, and what stays optional) is
-  `boundary/hosts/CONTRACT.md`; shipped host bindings are under `boundary/hosts/`.
+  [`host-adapters.md`](host-adapters.md); a binding for one host is written in the
+  rules repository, whose location §0 of the machine-config document records.
 - Building one is catalogue work: search first, follow the catalogue's conventions,
   register it, and verify it with its own test entry point.

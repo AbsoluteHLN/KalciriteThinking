@@ -100,8 +100,21 @@ values, exactly like cache paths:
 | `CONCURRENCY_LIMIT` | Any concurrency or budget ceiling? | parallel fan-out must respect it |
 
 **Absence of a record means "not supported."** Fall back to the inherited route, say
-so in the report, and never invent `provider` / `model` fields. A generic walkthrough
-and the DSH specifics are in `boundary/DELEGATION.md` in the source repository.
+so in the report, and never invent `provider` / `model` fields.
+
+Recording the answers, per host shape:
+
+| Situation | What to record |
+|---|---|
+| an equivalent route setting exists | its location in `ROUTE_ENABLE_SETTING`, its timing in `ROUTE_TAKES_EFFECT` (`new session` / `immediate` / `restart`) |
+| delegation exists but cannot choose a model | `ROUTE_SELECTION_SUPPORTED = none`; the rules degrade to "work inline, or accept the inherited route" |
+| there is no delegation at all | `DELEGATION_TOOLS = none`; §2's cost tiers decide only whether to open a new session |
+| a concurrency or budget ceiling exists | `CONCURRENCY_LIMIT`; read it before fanning out |
+
+Write them to **two** places: the machine-config document's model-routing section (the full
+key set), and the loaded `SKILL.md`'s `kalcirite:local-profile` block (at least
+`ROUTE_PROVIDER`, `CHEAP_MODELS`, `ROUTE_TOOL`, `ROUTE_SELECTION_SUPPORTED`). The
+[`interview.md`](interview.md) question 6 walks through them.
 
 ## A delegation prompt that survives
 

@@ -106,7 +106,8 @@ Copy-Item .\boundary\MACHINE-CONFIG.template.md ..\MACHINE-CONFIG.zh.md
 | `CONCURRENCY_LIMIT` | `<N>` 或留空 | 并发 / 预算上限；留空＝不作上限假设 |
 
 > 没有写 `ROUTE_SELECTION_SUPPORTED = yes`，就按**不支持**处理：沿用父路由，不许伪造 `provider` / `model` 字段。
-> 宿主相关细节与 DSH 的实测答案见 [`../boundary/DELEGATION.md`](../boundary/DELEGATION.md)。
+> 宿主相关细节与 DSH 的实测答案见 [`hosts/dsh.md`](hosts/dsh.md)，通用记法与六问见
+> [`../skill/kalcirite-project-rules/reference/delegation.md`](../skill/kalcirite-project-rules/reference/delegation.md)。
 
 ## 7. 本机环境
 

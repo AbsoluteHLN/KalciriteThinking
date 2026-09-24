@@ -22,8 +22,12 @@ back. An answer that lives only in the conversation is lost.
 | Step | Who | Produces |
 |---|---|---|
 | 1. Ask | the agent, once, in one batch | the answers |
-| 2. Record | the agent | the machine-config document (`boundary/MACHINE-CONFIG.template.md` shows the shape) |
-| 3. Export + install | `scripts/export-boundary.ps1`, then `scripts/install-skill.ps1` | `PROJECT-BOUNDARY.md` in the skill directory |
+| 2. Record | the agent | the machine-config document — one hand-edited, human-facing document (the rules repository ships a `MACHINE-CONFIG` template showing its shape) |
+| 3. Export + install | the rules repository's exporter, then its installer | `PROJECT-BOUNDARY.md` in the skill directory |
+
+The paths to the exporter, the installer and the template are **not** in this file: they
+are recorded in §0 of the machine-config document itself, so the rule text stays
+environment-neutral. When §0 is unavailable, reproduce step 3 with any tool.
 
 The machine-config document is hand-edited and human-facing; the boundary file is
 generated from it and agent-facing. Never edit the generated file — the next

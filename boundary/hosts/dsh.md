@@ -1,8 +1,10 @@
 # Host binding — DSH (DeepSeek Harness) on Windows
 
 What DSH reads, what enforces the boundary, and how to prove enforcement is live.
-Implements [`CONTRACT.md`](CONTRACT.md); the reference adapter lives in the shared
-tool catalogue as `agent-adapters/dsh-kalcirite-boundary`.
+Implements the adapter contract shipped with the rule text as
+[`reference/host-adapters.md`](../../skill/kalcirite-project-rules/reference/host-adapters.md);
+the reference adapter lives in the shared tool catalogue as
+`agent-adapters/dsh-kalcirite-boundary`.
 
 Install shape produced by `scripts/install-skill.ps1`:
 
@@ -66,9 +68,22 @@ subagent-model-selection:
     - { provider: csu, model: Qwen }
 ```
 
-Validation is strict: routes must be non-empty and unique, and `enabled: true` with an empty
-`allowedModels` list is an error. `list_subagent_models` appears only once this is active.
-`subagent_fork` still keeps the parent's route (KV-cache reuse) — it never takes a model.
+The host facts behind the `ROUTE_*` / `DELEGATION_TOOLS` keys — the six things that must be
+asked on **every** host, answered here for DSH:
+
+| Fact | DSH |
+|---|---|
+| validation | routes must be non-empty and unique; `enabled: true` with an empty `allowedModels` list is an error |
+| when it takes effect | read at **session creation**, recorded as the session event `subagent/model-selection-policy`, inherited by children; a restored session keeps the policy it recorded — **editing settings afterwards does not change a running session** |
+| what it exposes | `subagent` / `subagent_fork` gain `provider` / `model` / `reasoning_effort`, and `list_subagent_models` appears |
+| `subagent_fork` exception | deliberately offers no model choice and always takes the parent route (KV-cache reuse) — do not expect it to switch models |
+| field value | the routing field takes the **configured id**, not the display name (display `csu/GLM-5.3-Flash` ⇒ id `GLM`) |
+| when it is off | the delegation tools do not expose those fields: **do not fabricate them**; fall back to the parent route or work inline, and report model selection as unavailable |
+
+On another host, record the equivalent: the setting location in `ROUTE_ENABLE_SETTING`, the
+timing in `ROUTE_TAKES_EFFECT` (`new session` / `immediate` / `restart`), `ROUTE_SELECTION_SUPPORTED = none`
+when a delegation cannot choose, `DELEGATION_TOOLS = none` when there is no delegation at all, and any
+ceiling in `CONCURRENCY_LIMIT`. A boundary that does not say route selection is supported means it is not.
 
 The provider's model list lives in the same settings file under the adapter section, for example:
 
@@ -102,6 +117,5 @@ llm-pi-ai:
 | `ROUTE_TAKES_EFFECT` | `new session` |
 
 See [`../MACHINE-CONFIG.template.md`](../MACHINE-CONFIG.template.md) for the hand-edited
-source document these values come from, [`../QUESTIONS.md`](../QUESTIONS.md) for why they
-must be recorded at all, and [`../DELEGATION.md`](../DELEGATION.md) for the sub-agent /
-model-selection details that must be recorded on every host.
+source document these values come from, and [`../QUESTIONS.md`](../QUESTIONS.md) for why they
+must be recorded at all.

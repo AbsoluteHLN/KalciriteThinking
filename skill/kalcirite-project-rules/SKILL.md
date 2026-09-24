@@ -3,12 +3,12 @@ name: kalcirite-project-rules
 description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, a single shared dependency cache (no per-project installs), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
 whenToUse: "Working in or delegating work inside a repository that shares a machine-level dependency cache, a canonical UI source, or a shared tool catalogue; installing/building dependencies; resetting or extending a UI; deciding where a reusable plugin or tool belongs; reorganizing project structure and build output; or delegating to cheaper models. Also when adopting this skill on a new machine — that requires the first-run interview (§0.2) before any work."
 metadata:
-  version: "3.1"
+  version: "3.2"
   kind: "portable-rules"
   scope: "per-machine"
   config: "PROJECT-BOUNDARY.md — project root, then this skill's directory, then the agent config root (§0.1)"
   localProfile: "block between the kalcirite:local-profile markers below; empty means run the first-run interview (§0.2) first"
-  reference: "reference/ — interview, delegation, dependency-cache, ui-and-tools; read on demand"
+  reference: "reference/ — interview, delegation, dependency-cache, ui-and-tools, host-adapters; read on demand"
 ---
 
 # Kalcirite project rules (portable)
@@ -49,8 +49,9 @@ A boundary file is the machine-config document's keyed rows plus a `kalcirite:an
 Ask once, in one batch, in the user's language, each question carrying a **probed default** labelled *detected* or *guess*. The question table, probing methods, blank-handling rules, and the export/install flow are in **`reference/interview.md`**. Then:
 
 1. record the answers in this machine's config document (hand-edited, human-facing);
-2. `scripts/export-boundary.ps1` turns that document into the boundary file;
-3. `scripts/install-skill.ps1` copies the rule text and boundary file into the target skill root.
+2. **export** that document into the boundary file — the rules repository ships an
+   exporter for this, whose path is recorded in §0 of that document;
+3. **install** the rule text plus the exported boundary file into the target skill root.
 
 Never edit the generated boundary file — the next export overwrites it. **Blank is a legitimate answer**: it makes the rules stop and report for that domain, and never authorises guessing.
 
@@ -91,7 +92,7 @@ Route by **required reasoning depth**, not by task size. Design, architecture, t
 - **Verify the capability before using it.** If the delegation tool does not expose `provider` / `model`, it does not exist for this session: delegate on the inherited route or work inline, and report model selection as unavailable. Never fabricate the fields, and do not edit settings mid-session hoping it applies.
 - **Every delegation is self-contained** — context, one bounded deliverable, read/write boundary, absolute target path, acceptance test, forbidden traps. A child does not see this conversation.
 
-Full procedure, the host-facts table, and a reusable prompt skeleton: **`reference/delegation.md`**; generic-vs-DSH walkthrough: `boundary/DELEGATION.md`.
+Full procedure, the host-facts table, and a reusable prompt skeleton: **`reference/delegation.md`**.
 
 ---
 
@@ -127,7 +128,7 @@ Procedure and the degraded (`UI_SOURCE` blank) mode: **`reference/ui-and-tools.m
 2. **Found** → reuse or compose it. Two implementations of one capability is a defect.
 3. **Not found** → build it **inside the catalogue**, following its existing directory family, contracts, validation entry point, and permission model — then run the catalogue's registry validator.
 
-Never ship a half-tool inside a consuming project, and never bypass the catalogue's authority declarations. A tool written inside a project is invisible to the next project, so the capability gets rebuilt — the cost this ladder exists to prevent. Host adapters are catalogue entries too: **`reference/ui-and-tools.md`**, `boundary/hosts/CONTRACT.md`.
+Never ship a half-tool inside a consuming project, and never bypass the catalogue's authority declarations. A tool written inside a project is invisible to the next project, so the capability gets rebuilt — the cost this ladder exists to prevent. Host adapters are catalogue entries too: **`reference/ui-and-tools.md`**, `reference/host-adapters.md`.
 
 ---
 
@@ -150,7 +151,7 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 5. **No half-migrations**: when moving an output path, update every script reference in the same change.
 6. **Legacy compatibility is explicit**: if a release pipeline must keep an old path, record the exception in `dev-docs/` instead of silently keeping two layouts.
 7. **The top level stays closed.** A new top-level entry is a decision, not a side effect: put the file under an existing root, or add the name to the boundary's `EXTRA_TOP_LEVEL` row and record the reason. Already-existing entries are not retroactively violations.
-8. **Make it a mechanism, not a memory.** A layout rule that lives only in a document decays: it is read once, and nothing reacts to a misplaced file. If your host can inject prompt context and intercept a write before it lands, install a boundary adapter that injects the resolved values and rejects the offending write — this text stays portable, the adapter is the host-specific half. Contract: `boundary/hosts/CONTRACT.md`; the DSH adapter ships at `<TOOL_HOME>/agent-adapters/dsh-kalcirite-boundary`.
+8. **Make it a mechanism, not a memory.** A layout rule that lives only in a document decays: it is read once, and nothing reacts to a misplaced file. If your host can inject prompt context and intercept a write before it lands, install a boundary adapter that injects the resolved values and rejects the offending write — this text stays portable, the adapter is the host-specific half. Contract: `reference/host-adapters.md`.
 
 ---
 
@@ -187,6 +188,6 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 
 ---
 
-*Read on demand: `reference/interview.md` (unresolved boundary or changed machine), `reference/delegation.md` (delegating, routing, handoff), `reference/dependency-cache.md` (installs and repair), `reference/ui-and-tools.md` (UI, catalogue, adapters), `boundary/DELEGATION.md` (generic-vs-DSH delegation), `boundary/hosts/CONTRACT.md` (writing an adapter).*
+*Read on demand: `reference/interview.md` (unresolved boundary or changed machine), `reference/delegation.md` (delegating, routing, handoff), `reference/dependency-cache.md` (installs and repair), `reference/ui-and-tools.md` (UI, catalogue, adapters), `reference/host-adapters.md` (writing an adapter for a host).*
 
-*KalciriteThinking — portable edition. Machine-specific values belong in `PROJECT-BOUNDARY.md`; procedures belong in `reference/`. Keep this file environment-neutral when editing it.*
+*KalciriteThinking — portable edition. Machine-specific values belong in `PROJECT-BOUNDARY.md`; procedures belong in `reference/`. Keep this file environment-neutral when editing it: every path it names must ship inside this skill directory, and anything outside it is referred to by name through the machine-config document, never by a repository-relative path.*
