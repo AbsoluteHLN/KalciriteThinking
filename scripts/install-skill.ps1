@@ -22,7 +22,7 @@
     non-ASCII script files that have no BOM.
 
 .PARAMETER Target
-    Skill root the agent scans, e.g. D:\Cetus\dshconfig\skills or "$HOME\.claude\skills".
+    Skill root the agent scans, e.g. <DSH_HOME>\skills or "$HOME\.claude\skills".
 
 .PARAMETER Source
     This repository's skill directory. Defaults to ..\skill\kalcirite-project-rules.

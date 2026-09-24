@@ -63,9 +63,8 @@ children; editing it does not change a running or restored session — open a ne
 subagent-model-selection:
   enabled: true
   allowedModels:
-    - { provider: csu, model: GLM }
-    - { provider: csu, model: DeepSeek }
-    - { provider: csu, model: Qwen }
+    - { provider: <provider-id>, model: <model-id> }
+    - { provider: <provider-id>, model: <model-id> }
 ```
 
 The host facts behind the `ROUTE_*` / `DELEGATION_TOOLS` keys — the six things that must be
@@ -77,7 +76,7 @@ asked on **every** host, answered here for DSH:
 | when it takes effect | read at **session creation**, recorded as the session event `subagent/model-selection-policy`, inherited by children; a restored session keeps the policy it recorded — **editing settings afterwards does not change a running session** |
 | what it exposes | `subagent` / `subagent_fork` gain `provider` / `model` / `reasoning_effort`, and `list_subagent_models` appears |
 | `subagent_fork` exception | deliberately offers no model choice and always takes the parent route (KV-cache reuse) — do not expect it to switch models |
-| field value | the routing field takes the **configured id**, not the display name (display `csu/GLM-5.3-Flash` ⇒ id `GLM`) |
+| field value | the routing field takes the **configured id**, not the display name (an entry displayed as `<provider>/<Model>-Flash` is configured under a short id such as `GLM`) |
 | when it is off | the delegation tools do not expose those fields: **do not fabricate them**; fall back to the parent route or work inline, and report model selection as unavailable |
 
 On another host, record the equivalent: the setting location in `ROUTE_ENABLE_SETTING`, the
@@ -88,27 +87,30 @@ ceiling in `CONCURRENCY_LIMIT`. A boundary that does not say route selection is 
 The provider's model list lives in the same settings file under the adapter section, for example:
 
 ```yaml
-llm-pi-ai:
+<adapter-section>:
   providers:
-    csu:
-      displayName: csu
+    <provider-id>:
+      displayName: <shown in the UI>
       api: openai-completions
       baseURL: https://<gateway>/v1
-      apiKeyEnv: CSU_API_KEY
+      apiKeyEnv: <ENV_VAR_HOLDING_THE_KEY>
       models:
-        - id: GLM          # <- routing field uses this id
-          name: csu/GLM-5.3-Flash   # <- display name, NOT the routing value
+        - id: GLM                        # <- the routing field uses this id
+          name: <provider>/<Model>-Flash # <- display name, NOT the routing value
 ```
 
 ## Boundary values
 
-| Key | Example |
+The keys a DSH boundary must carry, as placeholders — the real values belong in the
+machine-config document, never here:
+
+| Key | Example value |
 |---|---|
-| `DEP_CACHE` | `E:\dependency-cache` |
-| `UI_SOURCE` | `E:\Projects\<ui-project>\ui-source` |
-| `TOOL_HOME` | `E:\<tools-repo>` |
+| `DEP_CACHE` | `<drive>:\dependency-cache` |
+| `UI_SOURCE` | `<drive>:\Projects\<ui-project>\ui-source` |
+| `TOOL_HOME` | `<drive>:\<tools-repo>` |
 | `BUILD_ROOT` / `TMP` / `EVIDENCE` | `cxbuild/` / `temp/` / `verify-evidence/` |
-| `ROUTE_PROVIDER` | `csu` |
+| `ROUTE_PROVIDER` | `<provider-id>` |
 | `ROUTE_TOOL` | `list_subagent_models` |
 | `HOST_AGENT` | `DeepSeek Harness (DSH)` |
 | `DELEGATION_TOOLS` | `subagent, subagent_fork` |

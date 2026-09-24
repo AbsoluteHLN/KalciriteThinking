@@ -18,7 +18,7 @@ This is my first real attempt at formalising a discipline like this. It is not g
 
 ### The machine config is its own document
 
-Machine facts are **not written into the rule text, and not scattered around**: they live in one document. On my machine that is `E:\KalciriteThinking-local\MACHINE-CONFIG.zh.md` — deliberately a **sibling directory** of this repository rather than a subdirectory of it (the repository's `.gitignore` also excludes `local/` as a safety net).
+Machine facts are **not written into the rule text, and not scattered around**: they live in one document. That document is deliberately a **sibling directory** of this repository rather than a subdirectory of it, e.g. `<parent>\KalciriteThinking-local\MACHINE-CONFIG.md` (the repository's `.gitignore` also excludes `local/` as a safety net) — committing it would publish one machine's paths, accounts and ports.
 
 - **One document, one place.** Paths, ports, caches and model routes appear there exactly once; the rule text stays environment-neutral and resolves values through its §0.1 order.
 - **What the tools read is derived.** `export-boundary.ps1` turns the document's key/value tables into `PROJECT-BOUNDARY.md`: it keeps the `##` sections, drops the third commentary column and appends the `kalcirite:answers` JSON block. The installer and the host adapter read only that file, so the hand-written values and the machine-read values cannot drift apart.
