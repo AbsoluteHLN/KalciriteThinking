@@ -2,20 +2,43 @@
 
 **适用于「一台机器、多个仓库」的通用 agent 工程纪律。**
 
-[English](README.en.md) · [规则正文](skills/kalcirite-project-rules/SKILL.md) · [边界模板](boundary/PROJECT-BOUNDARY.template.md)
+[English](README.en.md) · [规则正文](skill/kalcirite-project-rules/SKILL.md) · [本机配置模板](boundary/MACHINE-CONFIG.template.md) · [更新日志](CHANGELOG.md)
 
 ## 声明
 
 我第一次实际去规范化这种技能，不确保适用于你的工作流，可以以此仅作参考！
 
-## 两层结构
+## 三层结构
 
-| 层 | 目录 | 内容 | 可否直接共享 |
+| 层 | 位置 | 内容 | 可否直接共享 |
 |---|---|---|---|
-| **通用层** | [`skills/`](skills/) [`boundary/`](boundary/) [`scripts/`](scripts/) [`examples/`](examples/) | 规则正文、边界模板与提问清单、安装脚本、示例 | 可以。不含任何私有路径 |
-| **本机层** | 不在本仓库（`E:\KalciriteThinking-local\`，已 gitignore） | 本机写实边界值、项目专有事实 | **不要**。只作参考，不进别人的机器 |
+| **通用层** | 本仓库 | 规则正文与其参考页、本机配置模板与提问清单、宿主适配器契约与绑定、脚本 | 可以。不含任何私有路径 |
+| **本机配置文档** | 仓库外，单独一份 | 这台机器的全部专有事项：宿主与环境、依赖缓存、UI 上游、工具库、目录契约、模型路由、网络与端口 | **不要**。只作参考，不进别人的机器 |
+| **机器可读边界文件** | 由本机配置文档导出 | 键值表 + `kalcirite:answers` JSON，供安装脚本与宿主适配器读取 | 同上 |
 
-本机层的文件是**一份已经填好的答案**，不是规则的一部分。别人拿到的是通用层，然后用安装向导生成自己的本机层。
+### 本机配置单独成文
+
+机器相关的事实**不写进规则正文，也不散落在各处**，而是集中在一份文档里。本机那一份是 `E:\KalciriteThinking-local\MACHINE-CONFIG.zh.md`：刻意做成本仓库的**兄弟目录**，不在仓库树内（仓库 `.gitignore` 另外兜底排除 `local/`）。
+
+- **一份文档，一个位置。** 路径、端口、缓存、模型路由这类事实只在该文档里出现一次；规则正文永远环境中性，按 §0.1 的顺序解析取值。
+- **工具读的那份是派生物。** `export-boundary.ps1` 从文档的键值表生成 `PROJECT-BOUNDARY.md`：保留 `##` 分节、丢掉第三列说明、附上 `kalcirite:answers` JSON 块。安装脚本与宿主适配器都只读这一份，所以「人写的值」和「工具读的值」不会各说各话。
+- **安装脚本不生成任何值。** 它只把导出的边界文件逐字节复制进去，再填 `local-profile` 块。谁想知道值是从哪来的，答案永远只有一处。
+- **别人不需要这份文档。** 别人拿到的是空白模板 + 入职问卷（规则正文 §0.2，问题清单在 [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md)），由**他自己**回答，落进**他自己的**一份同结构文档。
+- **换机器只改这一份。** 规则正文、模板、脚本、适配器都不用动。
+
+本机层的文档是**一份已经填好的答案**，不是规则的一部分。
+
+## 仓库结构
+
+| 路径 | 内容 |
+|---|---|
+| [`skill/kalcirite-project-rules/`](skill/kalcirite-project-rules/) | 规则正文 `SKILL.md`；细节拆到 `reference/`（入职问卷、委派与模型选用、依赖缓存、UI 与工具库） |
+| [`boundary/`](boundary/) | 通用层的边界资料：配置模板、提问清单、委派说明、项目级示例 |
+| [`boundary/hosts/`](boundary/hosts/) | 宿主适配器：[契约](boundary/hosts/CONTRACT.md) 与 [DSH 绑定](boundary/hosts/dsh.md) |
+| [`scripts/`](scripts/) | 导出器与安装/同步脚本，用法见 [`scripts/README.md`](scripts/README.md) |
+| [`CHANGELOG.md`](CHANGELOG.md) | 规则正文的版本历史；`sync-skill.ps1` 会打印版本差 |
+
+适配器代码本身不在这里，而在公共工具库的 `agent-adapters/dsh-kalcirite-boundary`（本机实例路径见本机配置文档）。
 
 ## 十条原则
 
@@ -30,55 +53,56 @@
 9. **有证据才算结论**：已验证 / 已尝试 / 未尝试，是三个不同的词。
 10. **事实靠实测**：路径、端口、版本先量后说。
 
-## 安装：先提问，再写回
+## 安装：三步，只有第一步是手写
 
-规则正文里没有任何硬编码路径。安装必须**先问清这台机器的细节**，再把答案写回本地技能内容 —— 这是保证智能的前提：宁可停下来问，也不要猜。
+规则正文里没有任何硬编码路径，所以取值必须先落到一份文档上，再派生成工具读的文件。
 
 ```powershell
-# 首次安装：交互式提问 → 复制规则 → 写回边界文件与本机档案块
-& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills"
-& .\scripts\install-skill.ps1 -Target "$HOME\.claude\skills"       # Claude 风格
-# 其他 agent：把 -Target 指向它的 skill 目录
+# 1. 把模板复制出仓库并填好（这份永远留在仓库外）
+Copy-Item .\boundary\MACHINE-CONFIG.template.md ..\MACHINE-CONFIG.md
 
-# 机器细节变了：重新提问
-& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -Reconfigure
+# 2. 导出工具读的边界文件
+& .\scripts\export-boundary.ps1 -Source ..\MACHINE-CONFIG.md -Out ..\PROJECT-BOUNDARY.md
+
+# 3. 安装：复制规则正文 + 逐字节复制边界文件 + 填本机档案块
+& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -FromBoundary ..\PROJECT-BOUNDARY.md
+& .\scripts\install-skill.ps1 -Target "$HOME\.claude\skills" -FromBoundary ..\PROJECT-BOUNDARY.md
+# 其他 agent：把 -Target 指向它的 skill 目录
 
 # 只更新规则正文（保留本机答案）
 & .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -Force
 ```
 
-向导会问的六类事：
+安装脚本**没有交互模式**：交互这件事属于 agent，规则正文 §0.2 规定了它的入口和问法。若既没给 `-FromBoundary`、目标位置也没有现成的边界文件，脚本会停下来并打印上面那三条命令。
 
-1. **唯一依赖缓存**放在哪、子目录怎么分；
-2. **唯一 UI 上游**在哪、默认版本、预览源（没有就答 `none`）；
-3. **公共工具/插件库**在哪；
-4. **项目目录**名字（`src` / `docs` / `dev-docs` / `verify-evidence` / `cxbuild` / `temp`）；
-5. **成本分级模型路由**：授权的提供方与各档模型；
-6. **子代理与模型选用**：这台机器的宿主 agent 是什么、它暴露哪些委派工具、能否为子代理指定模型、开关在哪、何时生效、并发上限。
-
-问题清单与写法见 [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md)，子代理/模型选用的细节见 [`boundary/DELEGATION.md`](boundary/DELEGATION.md)。
+它填的 `MACHINE-CONFIG.md` 有八节：宿主与环境、依赖缓存、UI 上游、工具库、目录契约、模型路由、子代理与委派、项目专有例外。问题清单与写法见 [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md)，子代理/模型选用的细节见 [`boundary/DELEGATION.md`](boundary/DELEGATION.md) 与 [`reference/delegation.md`](skill/kalcirite-project-rules/reference/delegation.md)。
 
 答案会写回两处：技能目录内的 `PROJECT-BOUNDARY.md`（就近解析，§0.1 第 2 顺位）和已安装 `SKILL.md` 里的 `local-profile` 块。**留空是合法答案**，含义是「不作假设」—— 规则会停下来报告，而不是去猜。项目级例外再放一份 `<项目根>/PROJECT-BOUNDARY.md`，效力最高。
 
-脚本在 Windows PowerShell 5.1 与 PowerShell 7+ 均可运行，只复制文件，不执行任何逻辑。用法见 [`scripts/README.md`](scripts/README.md)，示例见 [`examples/`](examples/)。
+`-Force` 之前，脚本会拒绝任何取值字面写成 `<...>` 的文档，也会直接拒掉空的 `DEP_CACHE`；手写的旧边界文件在没给 `-Force` 时不会被覆盖。
+
+你手工维护的是**本机配置文档**；上面那份 `PROJECT-BOUNDARY.md` 是它的机器可读导出，由导出器生成，别手改。
+
+脚本在 Windows PowerShell 5.1 与 PowerShell 7+ 均可运行，只复制和生成文件，不执行任何仓库逻辑。完整用法见 [`scripts/README.md`](scripts/README.md)，项目级示例见 [`boundary/examples/`](boundary/examples/)。
 
 ## 让规则真的生效：宿主适配器
 
-技能是文档：读一次，之后随长会话与压缩衰减，而且没有任何东西对「放错位置的文件」作出反应。要让布局边界真正生效，必须在宿主侧补机制。DSH 的适配器放在公共工具库：
+技能是文档：读一次，之后随长会话与压缩衰减，而且没有任何东西对「放错位置的文件」做出反应。要让布局边界真正生效，必须在宿主侧补机制。
 
-- 位置 `E:\KalciriteTools\agent-adapters\dsh-kalcirite-boundary`，已在 `E:\KalciriteTools\registry.json` 登记。
-- 注入：把解析出的边界值与布局契约加入每次 prompt 组装，事实不再随技能文档衰减。
-- 守卫：对 `write` / `edit` 拦截三类违规 —— 白名单之外的**新**顶层条目、项目内依赖载荷、构建根之外的构建产物。默认每个路径只拒绝一次并说明理由，原样重试即放行。
-- 只拦截尚不存在的路径，接管遗留项目不会误伤。
+- **位置**：公共工具库里的 `agent-adapters/dsh-kalcirite-boundary`（本机实例路径见本机配置文档，不属于通用层）。
+- **注入**：把解析出的边界值与布局契约加入每次 prompt 组装，事实不再随技能文档衰减。
+- **拦截**：对 `write` / `edit` 与 shell 命令按规则作出反应 —— 白名单之外的**新**顶层条目、项目内依赖载荷、构建根之外的构建产物、边界未配置时直接挡下。默认每个路径只拒绝一次并说明理由，原样重试即放行。
+- **只拦截尚不存在的路径**，接管遗留项目不会误伤。
+- **没配置就不放行**：边界文件缺失或 `DEP_CACHE` 为空时，写入与安装类命令会被硬挡，直到按 §0.2 回答完问卷。
 
-**分工**：技能正文给规则与解析顺序（跨 agent 通用），适配器负责注入与拦截（宿主专有）。其他宿主可照同样分工自建。
+**分工**：技能正文给规则与解析顺序（跨 agent 通用），适配器负责注入与拦截（宿主专有）。这份分工是一份可实现的契约，见 [`boundary/hosts/CONTRACT.md`](boundary/hosts/CONTRACT.md)；本机已落地的绑定见 [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md)。其他宿主可照同样分工自建。
 
 ## 其他用法
 
 - **作为仓库指令文件**：把需要的章节并入 `AGENTS.md` / `CLAUDE.md` / `CONTRIBUTING.md`。
-- **作为人工检查清单**：直接读 `SKILL.md`。
+- **作为人工检查清单**：直接读 [`SKILL.md`](skill/kalcirite-project-rules/SKILL.md)。
 
-规则正文不含密钥、账号或私有路径；若你的边界文件含内网主机名，请勿纳入版本控制。
+规则正文不含密钥、账号或私有路径。**本机配置文档请放在本仓库之外**（并 gitignore），它才是写实的那一份；若其中含内网主机名，更不要提交。
 
 ## 许可
 

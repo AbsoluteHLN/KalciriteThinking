@@ -1,6 +1,6 @@
 # 子代理与模型选用（安装时必须问清的细节）
 
-规则正文 §2 定的是**判断标准**：廉价模型读、强模型判断，先发现路由再命名，不越出授权提供方。
+规则正文 §2 定的是**判断标准**：廉价模型读、强模型判断，先发现路由再命名，不越出授权提供方。完整流程在 [`../skill/kalcirite-project-rules/reference/delegation.md`](../skill/kalcirite-project-rules/reference/delegation.md)。
 
 但"**能不能选模型、怎么选、在哪个开关里开、什么时候生效**"完全取决于宿主 agent——这是**宿主/机器相关**的事实，不能写死在通用规则里。安装到一台新机器时，这部分必须单独问清并写回边界文件，否则 agent 会以为"可以指定模型"，然后要么伪造字段，要么白烧一遍预算去试探。
 
@@ -35,7 +35,7 @@ subagent-model-selection:
 | 字段取值 | 路由字段要填**配置里的 id**，不是界面显示名（如显示 `csu/GLM-5.3-Flash`，配置 id 是 `GLM`） |
 | 没开启时 | 委派工具不暴露这些字段：**不要伪造**，退回父路由或直接内联完成，并在报告里说明"模型选择不可用" |
 
-配置片段见 [`../examples/PROJECT-BOUNDARY.dsh.md`](../examples/PROJECT-BOUNDARY.dsh.md)。
+配置片段见 [`hosts/dsh.md`](hosts/dsh.md)。
 
 ## 其他宿主怎么记录
 
@@ -50,7 +50,7 @@ subagent-model-selection:
 
 ## 写回哪里
 
-1. 边界文件 §5（成本分级模型路由）——完整键值；
+1. 机器配置文档的 §6（模型路由与子代理选用）——完整键值；
 2. 被加载的 `SKILL.md` 的 `kalcirite:local-profile` 块——至少写 `ROUTE_PROVIDER`、`CHEAP_MODELS`、`ROUTE_TOOL`、`ROUTE_SELECTION_SUPPORTED`。
 
-安装向导（`scripts/install-skill.ps1` 第 6 问）会逐项问这些；agent 的首次访谈（规则正文 §0.2 第 6 行）问的是同一组。
+agent 的首次访谈（[`../skill/kalcirite-project-rules/reference/interview.md`](../skill/kalcirite-project-rules/reference/interview.md) 第 6 问）会逐项问这些，答案写进机器配置文档，再由 `scripts/export-boundary.ps1` 导出成边界文件。

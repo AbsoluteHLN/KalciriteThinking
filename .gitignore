@@ -7,7 +7,9 @@ temp/
 dist/
 .cxbuild/
 
-# the private machine layer: real boundary values live outside this repository
+# the private machine layer: real boundary values live outside this repository.
+# the convention is a sibling directory (E:\KalciriteThinking-local), which is
+# already outside the tree; this entry is the safety net if one lands inside.
 local/
 
 # editors / OS
