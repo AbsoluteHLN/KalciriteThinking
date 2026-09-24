@@ -30,7 +30,8 @@ hit:
 1. project root — `<cwd>/PROJECT-BOUNDARY.md`, or a `PROJECT-BOUNDARY` section in
    the project's `AGENTS.md` / `.kalcirite/boundary.md`;
 2. the skill's own directory — `PROJECT-BOUNDARY.md` beside `SKILL.md`;
-3. agent config root — `$DSH_HOME/PROJECT-BOUNDARY.md`, `~/.claude/PROJECT-BOUNDARY.md`, …;
+3. agent config root — `$DSH_HOME/PROJECT-BOUNDARY.md`, `~/.claude/PROJECT-BOUNDARY.md`,
+   `~/.codex/PROJECT-BOUNDARY.md`, …;
 4. the `kalcirite:local-profile` block inside the loaded `SKILL.md`;
 5. domain defaults.
 

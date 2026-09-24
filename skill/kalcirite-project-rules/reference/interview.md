@@ -23,16 +23,66 @@ back. An answer that lives only in the conversation is lost.
 |---|---|---|
 | 1. Ask | the agent, once, in one batch | the answers |
 | 2. Record | the agent | the machine-config document — one hand-edited, human-facing document (the rules repository ships a `MACHINE-CONFIG` template showing its shape) |
-| 3. Export + install | the rules repository's exporter, then its installer | `PROJECT-BOUNDARY.md` in the skill directory |
+| 3. Export + install | the rules repository's exporter, then its installer (PowerShell) — **or the agent itself, on any host, with its own file tools** | `PROJECT-BOUNDARY.md` in the skill directory |
 
 The paths to the exporter, the installer and the template are **not** in this file: they
 are recorded in §0 of the machine-config document itself, so the rule text stays
-environment-neutral. When §0 is unavailable, reproduce step 3 with any tool.
+environment-neutral.
 
 The machine-config document is hand-edited and human-facing; the boundary file is
-generated from it and agent-facing. Never edit the generated file — the next
-export overwrites it. On a non-Windows host, reproduce step 3 with any tool: the
-boundary file is the document's keyed rows plus a `kalcirite:answers` JSON block.
+derived from it and agent-facing. Never hand-edit a generated boundary file — the next
+export overwrites it. When the repository's scripts are not available (another OS,
+another host), step 3 is still fully executable: the two artifacts have an exact
+shape, and any agent with a write tool can produce them.
+
+### The boundary file's shape (writer-side contract)
+
+`PROJECT-BOUNDARY.md`, UTF-8, no BOM. Everything a reader (installer, host adapter)
+needs is in this file and this file alone:
+
+````markdown
+# PROJECT-BOUNDARY - machine boundary file
+
+## <any section title, e.g. "Layout contract">
+
+| Key | Value |
+|---|---|
+| `DEP_CACHE` | /home/u/dependency-cache |
+| `EXTRA_TOP_LEVEL` |            <- blank cell: a legitimate "no assumption"
+...
+
+## Collected answers (machine readable)
+
+<!-- kalcirite:answers:begin -->
+```json
+{
+  "DEP_CACHE": "/home/u/dependency-cache",
+  "EXTRA_TOP_LEVEL": "",
+  "GENERATED": "who/what produced this file, when"
+}
+```
+<!-- kalcirite:answers:end -->
+````
+
+Rules:
+
+1. **Rows**: `| \`KEY\` | value |` — two columns, keys matching `^[A-Z][A-Z0-9_]*$`.
+   A blank cell means "no assumption for this key"; write it blank, do not delete
+   the row or write a placeholder.
+2. **The JSON block is authoritative** when present (between the two marker
+   comments, inside a `json` fence); readers fall back to the markdown rows only
+   when the block is absent or unparseable — a hand-written file with rows alone is
+   a supported case. Readers **drop empty values** either way.
+3. **`GENERATED`** records provenance (source document, date, tool or agent).
+4. **Placement** follows `SKILL.md` §0.1: project root (highest), the skill's own
+   directory, the agent config root.
+5. **Install = copy**: the skill directory goes to the host's skill root, the
+   boundary file lands next to `SKILL.md`, and — whenever `SKILL.md` is writable —
+   its `kalcirite:local-profile` block gets the same key values (the last-resort
+   fallback for hosts with no boundary support).
+
+The PowerShell scripts in the rules repository are one correct implementation of
+this contract on Windows, not the contract itself.
 
 ## Questions
 

@@ -84,7 +84,15 @@ $env:CARGO_HOME ; $env:PIP_CACHE_DIR
 ```
 
 ```bash
+# 1. The project holds no real payload directory: expect no output.
+#    (find without -L: links are not reported as directories)
+find <project> -type d \( -name node_modules -o -name vendor -o -name .venv \
+  -o -name venv -o -name site-packages -o -name Pods \)
+# 2. A payload that is present must link into the store:
 readlink -f node_modules          # expect a path inside the store
+# 3. The store is the one root, machine-wide:
+pnpm config get store-dir ; npm config get cache
+echo "$CARGO_HOME" "$PIP_CACHE_DIR"
 test -e "$DEP_CACHE" && echo present
 ```
 

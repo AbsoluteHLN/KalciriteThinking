@@ -75,6 +75,18 @@ Copy-Item .\boundary\MACHINE-CONFIG.template.md ..\MACHINE-CONFIG.md
 
 The installer has **no interactive mode**: the interview belongs to the agent, and rule text §0.2 defines its entry point and its questions. With no `-FromBoundary` and no boundary already installed, it stops and prints the three commands above.
 
+### Any host can run it: Codex / Claude Code / DSH / others
+
+The rule text is bound to **no host**: no host tool names, no host paths, no plugin-mechanism assumptions. Any host that supports the open `SKILL.md` skill format just needs the `skill/kalcirite-project-rules/` directory in its skill directory and `PROJECT-BOUNDARY.md` beside `SKILL.md`:
+
+| Host | Project-level | Global |
+|---|---|---|
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| Codex | `.codex/skills/` | `~/.codex/skills/` |
+| DeepSeek Harness (DSH) | — | `<DSH_HOME>\skills\` (the install script above) |
+
+The two `.ps1` scripts are a convenience implementation of the "export + install" steps on Windows, **not the contract itself**. On a non-Windows host the agent performs the same work with its own file tools: the complete shape of the boundary file (keyed rows + the `kalcirite:answers` JSON block + placement) is defined in the *The boundary file's shape* section of [`reference/interview.md`](skill/kalcirite-project-rules/reference/interview.md) — writing a file to that shape *is* a valid boundary file. A host with no skill mechanism at all can fold the sections it needs into `AGENTS.md` / `CLAUDE.md` / `CONTRIBUTING.md` (see "Other usages" below). New skills usually require restarting the host process to be loaded.
+
 The `MACHINE-CONFIG.md` you fill in has eight sections: host and environment, dependency cache, UI source, tool catalogue, layout contract, model routing, sub-agents and delegation, and project-specific exceptions. The question bank is in [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md); the sub-agent / model-selection details are in [`reference/delegation.md`](skill/kalcirite-project-rules/reference/delegation.md) (generic recording) and [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md) (the measured DSH answers).
 
 Answers land in two places: `PROJECT-BOUNDARY.md` inside the skill directory (nearest-hit resolution, §0.1 rule 2) and the `local-profile` block inside the installed `SKILL.md`. **Blank is a valid answer** meaning "no assumption" — the rules stop and report instead of guessing. A per-project `<project>/PROJECT-BOUNDARY.md` wins over both.

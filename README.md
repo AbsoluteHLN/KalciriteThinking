@@ -75,6 +75,18 @@ Copy-Item .\boundary\MACHINE-CONFIG.template.md ..\MACHINE-CONFIG.md
 
 安装脚本**没有交互模式**：交互这件事属于 agent，规则正文 §0.2 规定了它的入口和问法。若既没给 `-FromBoundary`、目标位置也没有现成的边界文件，脚本会停下来并打印上面那三条命令。
 
+### 任意宿主都能装：Codex / Claude Code / DSH / 其他
+
+规则正文本身**不绑定任何宿主**：没有宿主工具名、没有宿主路径、没有插件机制假设。任何支持开放 `SKILL.md` 技能格式的宿主，把 `skill/kalcirite-project-rules/` 目录拷进它的技能目录、把 `PROJECT-BOUNDARY.md` 放在 `SKILL.md` 旁边即可：
+
+| 宿主 | 项目级 | 全局 |
+|---|---|---|
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| Codex | `.codex/skills/` | `~/.codex/skills/` |
+| DeepSeek Harness (DSH) | — | `<DSH_HOME>\skills\`（用上面的安装脚本） |
+
+上面的两个 `.ps1` 只是「导出 + 安装」两步在 Windows 上的便利实现，**不是契约本身**。在非 Windows 宿主上，agent 用自己的文件工具即可完成同样的事：边界文件的完整形状（键值行 + `kalcirite:answers` JSON 块 + 放置位置）由 [`reference/interview.md`](skill/kalcirite-project-rules/reference/interview.md) 的 *The boundary file's shape* 一节定义，照着写就是一份合法的边界文件。宿主如果连技能机制都没有，把需要的章节并进 `AGENTS.md` / `CLAUDE.md` / `CONTRIBUTING.md` 也可以（见文末「其他用法」）。新技能通常需要重启宿主进程才会被加载。
+
 它填的 `MACHINE-CONFIG.md` 有八节：宿主与环境、依赖缓存、UI 上游、工具库、目录契约、模型路由、子代理与委派、项目专有例外。问题清单与写法见 [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md)，子代理/模型选用的细节见 [`reference/delegation.md`](skill/kalcirite-project-rules/reference/delegation.md)（通用记法）与 [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md)（DSH 实测答案）。
 
 答案会写回两处：技能目录内的 `PROJECT-BOUNDARY.md`（就近解析，§0.1 第 2 顺位）和已安装 `SKILL.md` 里的 `local-profile` 块。**留空是合法答案**，含义是「不作假设」—— 规则会停下来报告，而不是去猜。项目级例外再放一份 `<项目根>/PROJECT-BOUNDARY.md`，效力最高。

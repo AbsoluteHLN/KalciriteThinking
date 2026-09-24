@@ -3,7 +3,7 @@ name: kalcirite-project-rules
 description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, one converged dependency store per ecosystem that every project, build, and variant links into (no per-project or per-build payloads), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
 whenToUse: "Working in or delegating work inside a repository that shares a machine-level dependency cache, a canonical UI source, or a shared tool catalogue; installing/building dependencies; resetting or extending a UI; deciding where a reusable plugin or tool belongs; reorganizing project structure and build output; or delegating to cheaper models. Also when adopting this skill on a new machine — that requires the first-run interview (§0.2) before any work."
 metadata:
-  version: "3.3"
+  version: "3.4"
   kind: "portable-rules"
   scope: "per-machine"
   config: "PROJECT-BOUNDARY.md — project root, then this skill's directory, then the agent config root (§0.1)"
@@ -36,7 +36,7 @@ The **boundary file** is `PROJECT-BOUNDARY.md`. Use the first hit, in this order
 
 1. **Project root** — `<project>/PROJECT-BOUNDARY.md` (or a `PROJECT-BOUNDARY` section in the project's `AGENTS.md` / `.kalcirite/boundary.md`). Highest priority: a project may override any machine value.
 2. **This skill's own directory** — `PROJECT-BOUNDARY.md` next to this `SKILL.md`. The installer writes it here, so it travels with the skill.
-3. **Agent config root** — `$DSH_HOME/PROJECT-BOUNDARY.md`, `~/.claude/PROJECT-BOUNDARY.md`, `~/.config/<agent>/PROJECT-BOUNDARY.md`, …
+3. **Agent config root** — the agent's own config/skills root, e.g. `$DSH_HOME/PROJECT-BOUNDARY.md` (DeepSeek Harness), `~/.claude/PROJECT-BOUNDARY.md` (Claude Code), `~/.codex/PROJECT-BOUNDARY.md` (Codex), `~/.config/<agent>/PROJECT-BOUNDARY.md`.
 4. **The local profile block above**, if it has been filled in.
 5. **Domain defaults** — the fallbacks written here as `<PLACEHOLDER>`.
 
@@ -50,8 +50,12 @@ Ask once, in one batch, in the user's language, each question carrying a **probe
 
 1. record the answers in this machine's config document (hand-edited, human-facing);
 2. **export** that document into the boundary file — the rules repository ships an
-   exporter for this, whose path is recorded in §0 of that document;
-3. **install** the rule text plus the exported boundary file into the target skill root.
+   exporter for this (PowerShell; on any other host the agent writes the same file by
+   hand — its exact shape is specified in `reference/interview.md`). The exporter's
+   path is recorded in §0 of that document;
+3. **install** the rule text plus the boundary file into the host's skill root — a
+   plain directory copy any host can perform, with `PROJECT-BOUNDARY.md` next to
+   `SKILL.md`.
 
 Never edit the generated boundary file — the next export overwrites it. **Blank is a legitimate answer**: it makes the rules stop and report for that domain, and never authorises guessing.
 

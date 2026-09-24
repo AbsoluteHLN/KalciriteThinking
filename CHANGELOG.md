@@ -7,6 +7,31 @@ changed, so a version bump is never the only signal.
 Versioning is on the **portable rule text**, not on the repository: a layout change
 or a README rewrite does not move it, a change to the discipline does.
 
+## 3.4
+
+**The skill is now host-neutral on its face.** The goal: Codex, DeepSeek
+Harness, Claude Code — any host that loads this skill can execute it precisely,
+without DSH, PowerShell, or a Windows shell in the loop.
+
+- **`reference/interview.md`** gains *The boundary file's shape* — the
+  writer-side contract: the keyed-row format, the `kalcirite:answers` JSON
+  block (authoritative when present, rows alone are a supported case, empty
+  values dropped), `GENERATED` provenance, placement per §0.1, and
+  install-equals-copy. The PowerShell scripts are declared to be one
+  implementation of the contract on Windows, not the contract itself.
+- **`SKILL.md` §0.1** names the agent config root per host (DSH `$DSH_HOME`,
+  Claude Code `~/.claude`, Codex `~/.codex`); **§0.2** steps 2–3 now say the
+  agent itself can export and install on any host.
+- **`reference/dependency-cache.md`**: the convergence checks get a bash
+  equivalent, so the executable checks work without PowerShell.
+- **`reference/host-adapters.md`** resolution examples gain `~/.codex/`.
+- The DSH-specific material that was already host-shaped (the worked example
+  in `reference/delegation.md`) stays, but is only ever labelled as an
+  example; nothing in the rule text requires a host that is not this one.
+- READMEs gain a per-host install table (`.claude/skills/`, `.codex/skills/`,
+  `<DSH_HOME>\skills\`) and state that a non-Windows host's agent can
+  produce a valid boundary file by hand from the spec.
+
 ## 3.3
 
 **Dependencies converge on one store.** §3 used to forbid per-project
