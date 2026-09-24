@@ -48,7 +48,8 @@
 
 .EXAMPLE
     # non-interactive, reuse this machine's recorded profile
-    & .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -FromBoundary .\local\PROJECT-BOUNDARY.md
+    # (the private machine layer lives outside this repository)
+    & .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -FromBoundary E:\KalciriteThinking-local\PROJECT-BOUNDARY.md
 
 .EXAMPLE
     & .\scripts\install-skill.ps1 -Target "$HOME\.claude\skills" -Reconfigure
@@ -651,6 +652,12 @@ if ($handWritten -and -not $Force) {
     throw "Boundary file was hand-written, refusing to overwrite: $boundaryOut  (re-run with -Force)"
 }
 
+# The install step below replaces the skill directory wholesale. The machine
+# boundary lives INSIDE that directory, so snapshot it before the removal -
+# otherwise the backup copy at step 3 has no source left to copy from.
+$priorBoundaryText = $null
+if ($hadBoundary) { $priorBoundaryText = Get-Content -LiteralPath $boundaryOut -Raw }
+
 if ($PSCmdlet.ShouldProcess($dest, 'Install rule text')) {
     if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Recurse -Force }
     New-Item -ItemType Directory -Force -Path $dest | Out-Null
@@ -660,11 +667,14 @@ if ($PSCmdlet.ShouldProcess($dest, 'Install rule text')) {
 
 # 3. write the answers back --------------------------------------------------
 if ($PSCmdlet.ShouldProcess($boundaryOut, 'Write machine boundary file')) {
-    if ($hadBoundary -and -not (Test-Path -LiteralPath ($boundaryOut + '.bak'))) {
-        Copy-Item -LiteralPath $boundaryOut -Destination ($boundaryOut + '.bak') -Force
+    if ($priorBoundaryText -and -not (Test-Path -LiteralPath ($boundaryOut + '.bak'))) {
+        Write-Utf8 ($boundaryOut + '.bak') $priorBoundaryText
     }
     $originNote = if ($origin) { $origin } else { 'interview' }
     Write-Utf8 $boundaryOut (New-BoundaryMarkdown $profile $stamp $originNote)
+    if (-not (Test-Path -LiteralPath $boundaryOut -PathType Leaf)) {
+        throw "boundary write-back failed, the install would be incomplete: $boundaryOut"
+    }
     Write-Host "wrote boundary  -> $boundaryOut"
 }
 

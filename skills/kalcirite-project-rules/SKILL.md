@@ -276,6 +276,7 @@ Rules:
 4. **Documentation split**: audience-facing → `docs/`; developer/maintenance → `dev-docs/`. Do not mix.
 5. **No half-migrations**: when moving an output path, update every script reference in the same change.
 6. **Legacy compatibility is explicit**: if an existing release pipeline must keep an old path, record the exception in `dev-docs/` instead of silently keeping two layouts.
+7. **Make it a mechanism, not a memory.** A layout rule that lives only in this document decays: it is read once, and nothing reacts to a misplaced file. If your host can inject prompt context and intercept a write before it lands, install a boundary adapter that injects the resolved values and rejects the offending write — keep this text portable and let the adapter be the host-specific half. A DSH adapter ships in the shared catalogue at `<TOOL_HOME>/agent-adapters/dsh-kalcirite-boundary`.
 
 ---
 

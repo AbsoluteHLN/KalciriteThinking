@@ -13,7 +13,7 @@ This is my first real attempt at formalising a discipline like this. It is not g
 | Layer | Directory | Contents | Shareable as-is |
 |---|---|---|---|
 | **Portable** | [`skills/`](skills/) [`boundary/`](boundary/) [`scripts/`](scripts/) [`examples/`](examples/) | Rule text, boundary template and question bank, installer, examples | Yes — no private paths |
-| **Local** | [`local/`](local/) | One machine's real boundary values and project-specific facts | **No** — reference only |
+| **Local** | Not in this repository (`E:\KalciriteThinking-local\`, gitignored) | One machine's real boundary values and project-specific facts | **No** — reference only |
 
 The local layer is *a filled-in answer sheet*, not part of the rules. Others take the portable layer and generate their own with the installer.
 
@@ -61,6 +61,17 @@ The question bank is in [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md); the su
 Answers land in two places: `PROJECT-BOUNDARY.md` inside the skill directory (nearest-hit resolution, §0.1 rule 2) and the `local-profile` block inside the installed `SKILL.md`. **Blank is a valid answer** meaning "no assumption" — the rules stop and report instead of guessing. A per-project `<project>/PROJECT-BOUNDARY.md` wins over both.
 
 The scripts run on Windows PowerShell 5.1 and PowerShell 7+, copy files only, and execute nothing. See [`scripts/README.md`](scripts/README.md) and [`examples/`](examples/).
+
+## Making the rules actually hold: a host adapter
+
+A skill is a document: it is read once and decays across long sessions and compaction, and nothing reacts to a misplaced file. Making the layout boundary hold requires a mechanism on the host side. The DSH adapter lives in the shared tool catalogue:
+
+- Location `E:\KalciriteTools\agent-adapters\dsh-kalcirite-boundary`, registered in `E:\KalciriteTools\registry.json`.
+- Injection: the resolved boundary values and layout contract join every prompt assembly, so the facts no longer decay with the skill document.
+- Guard: `write` / `edit` are checked for three violations — a **new** top-level entry outside the allow list, a dependency payload inside the project, and build output outside the build root. By default each path is denied once with an explanation, and an identical retry proceeds.
+- Only paths that do not exist yet are ever flagged, so adopting a legacy project is never blocked.
+
+**The split**: the skill text carries the rules and their resolution order (portable across agents); the adapter carries injection and interception (host-specific). Another host can build the same split for itself.
 
 ## Other ways to use it
 

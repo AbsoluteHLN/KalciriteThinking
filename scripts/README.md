@@ -13,7 +13,8 @@
 & .\scripts\install-skill.ps1 -Target "$HOME\.claude\skills" -Reconfigure
 
 # non-interactive: reuse answers recorded in an existing boundary file
-& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -FromBoundary .\local\PROJECT-BOUNDARY.md
+# (the private machine layer lives outside this repository: E:\KalciriteThinking-local\)
+& .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -FromBoundary E:\KalciriteThinking-local\PROJECT-BOUNDARY.md
 
 # preview without writing
 & .\scripts\install-skill.ps1 -Target "$env:DSH_HOME\skills" -WhatIf

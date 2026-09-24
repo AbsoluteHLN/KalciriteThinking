@@ -7,6 +7,9 @@ temp/
 dist/
 .cxbuild/
 
+# the private machine layer: real boundary values live outside this repository
+local/
+
 # editors / OS
 .vscode/
 .idea/
