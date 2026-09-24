@@ -41,7 +41,7 @@ default** labelled *detected* (you read it) or *guess* (you did not).
 
 | # | Ask | Keys | How to probe | If the user leaves it blank |
 |---|---|---|---|---|
-| 1 | Which single directory do all dependencies install into? | `DEP_CACHE` (+ derived sub-keys) | workspace drive + `\dependency-cache`; `pnpm store path`; `npm config get cache` | **blocking** — no dependency work at all |
+| 1 | Which single directory is the ONE dependency store for this machine — every project and every build resolves from it (no per-project or per-build payload)? | `DEP_CACHE` (+ derived sub-keys) | workspace drive + `\dependency-cache`; `pnpm store path`; `npm config get cache` | **blocking** — no dependency work at all |
 | 2 | Keep the conventional sub-layout under it (`pnpm-store`, `npm-cache`, `pip-cache`, `cargo`, `electron\Cache`, `electron-builder\Cache`)? | derived | which sub-directories already exist | name each one individually |
 | 3 | Is there a canonical UI source (design system / component engine), and where? | `UI_SOURCE`, `UI_VERSION`, `UI_PREVIEW` | sibling `*ui*` / `ui-source` directories | record `none`; §4 degrades to "one UI source per project, and styling must still be tokenised" |
 | 4 | Is there a shared tool/plugin catalogue, and where? | `TOOL_HOME`, `TOOL_INDEX`, `TOOL_REGISTRY`, `TOOL_VALIDATOR` | sibling catalogue repo; `INDEX.md`, `registry.json`, `**/validate-*` | record `none`; §5 degrades to "search the project's own `tools/` first" |

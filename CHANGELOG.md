@@ -7,6 +7,34 @@ changed, so a version bump is never the only signal.
 Versioning is on the **portable rule text**, not on the repository: a layout change
 or a README rewrite does not move it, a change to the discipline does.
 
+## 3.3
+
+**Dependencies converge on one store.** §3 used to forbid per-project
+payloads; the new boundary adds the other half of the same rule: the machine
+keeps **one** store per ecosystem — one pnpm store, one cargo registry, one
+npm cache, one shared `node_modules`-like tree — and every project, build
+target, and variant resolves from it and links in. *One folder with its own
+dependencies per build* is now named as the defect it is: N payload trees are
+N versions of the truth, and they drift.
+
+- **`SKILL.md` §3** is retitled "One dependency store — converged, shared,
+  never per-build" and gains two rules: exactly one store per ecosystem (no
+  second payload tree anywhere, **including under `<BUILD_ROOT>`**), and
+  consumers link, they do not copy — shared bytes, not a nominal "it is cached
+  elsewhere too".
+- **`reference/dependency-cache.md`** gets a convergence section (the
+  per-ecosystem store table, the per-build-folder prohibition, "build output
+  is generated code, never dependencies") and a **Proving convergence** block:
+  the project holds no real (non-linked) payload directory, any payload that
+  is present is a junction into the store, and the store is the one
+  machine-wide root.
+- **§9** red line and **§6** rule 2 extend to the per-build / per-variant
+  case; §0.3, §0.4 and the frontmatter wording follow.
+- The host adapter's injected text and its dependency refusal message now
+  carry the convergence wording. No new guard rule was needed: the write
+  guard already denies a payload directory at any depth, including under the
+  build root.
+
 ## 3.2
 
 **The portable layer is self-contained.** An installed skill copy had five

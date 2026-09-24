@@ -84,7 +84,7 @@ A refusal that only says "denied" is a bug report, not an instruction.
 
 | Rule | Trigger | Severity |
 |---|---|---|
-| dependency payload in project | creating `node_modules` / `.venv` / `vendor` / toolchain dirs inside the project | block |
+| dependency payload outside the store | creating `node_modules` / `.venv` / `vendor` / a second store directory anywhere in the project — **including under the build root**, where a per-build payload is exactly what the rules forbid | block |
 | build output outside the build root | creating `dist` / `build` / `out` / `target` / `release` outside `<BUILD_ROOT>` | block |
 | new top-level entry | creating a top-level name outside the accepted set | block (warn-once is acceptable) |
 | protected root touched | a delete command whose text matches a protected root | block |

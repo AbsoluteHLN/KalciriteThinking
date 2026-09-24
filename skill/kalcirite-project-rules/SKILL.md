@@ -1,9 +1,9 @@
 ---
 name: kalcirite-project-rules
-description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, a single shared dependency cache (no per-project installs), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
+description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, one converged dependency store per ecosystem that every project, build, and variant links into (no per-project or per-build payloads), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
 whenToUse: "Working in or delegating work inside a repository that shares a machine-level dependency cache, a canonical UI source, or a shared tool catalogue; installing/building dependencies; resetting or extending a UI; deciding where a reusable plugin or tool belongs; reorganizing project structure and build output; or delegating to cheaper models. Also when adopting this skill on a new machine — that requires the first-run interview (§0.2) before any work."
 metadata:
-  version: "3.2"
+  version: "3.3"
   kind: "portable-rules"
   scope: "per-machine"
   config: "PROJECT-BOUNDARY.md — project root, then this skill's directory, then the agent config root (§0.1)"
@@ -57,7 +57,7 @@ Never edit the generated boundary file — the next export overwrites it. **Blan
 
 ### 0.3 Placeholders
 
-`<DEP_CACHE>` — the one dependency cache root (blank ⇒ no dependency work at all).
+`<DEP_CACHE>` — the one dependency store root every project, build, and variant resolves from (blank ⇒ no dependency work at all).
 `<UI_SOURCE>` — canonical UI engine/source of truth (blank ⇒ one source per project, still tokenised).
 `<TOOL_HOME>` — shared plugin/tool catalogue (blank ⇒ search the project's own `tools/` first).
 `<BUILD_ROOT>` / `<TMP>` / `<EVIDENCE>` — build output, scratch, evidence roots; defaults `cxbuild/`, `temp/`, `verify-evidence/`.
@@ -65,7 +65,7 @@ Never edit the generated boundary file — the next export overwrites it. **Blan
 ### 0.4 Non-negotiables
 
 - **Build first, verify once.** Do not loop build→verify→build.
-- **No per-project dependency installs.** One cache, linked in.
+- **No per-project dependency installs.** One shared store, linked in — never a payload per project or per build.
 - **Reuse before rebuild.** UI and tools are found, not re-invented.
 - **No claim without evidence.** Unobserved capability is unverified capability.
 - **No work before the machine is known.** Interview first (§0.2), then act.
@@ -96,16 +96,19 @@ Full procedure, the host-facts table, and a reusable prompt skeleton: **`referen
 
 ---
 
-## 3. One dependency cache, linked — never vendored
+## 3. One dependency store — converged, shared, never per-build
 
 `<DEP_CACHE>` is the single dependency root on this machine; if it is blank, no dependency work happens at all.
 
-1. **Query the cache first** for every install, resolve, or download. Cache hit → use it; no online reinstall.
-2. **No dependency payload inside a project** — `node_modules`, `.venv`, `vendor/`, toolchain caches live only in `<DEP_CACHE>`; the project holds a junction / symlink / configured pointer at most.
-3. **Never clean, delete, reorganise, or overwrite the cache**, and never delete a *linked* dependency directory — a recursive delete punches through the junction into the shared cache.
-4. **Confirm closure before building.** Unsatisfiable closure → **stop and report the missing list**; "reinstall dependencies" is not a repair step. Fetching is an exception needing explicit human authorisation, and the payload still lands in the cache.
+**The rule is convergence, not caching.** Every project, build target, and variant on this machine resolves its dependencies out of the **same** store — one pnpm store, one cargo registry, one npm cache, one shared `node_modules`-like tree — and links into it. *One folder with its own dependencies per build* is the defect this rule forbids: N payload trees are N versions of the truth, and they drift apart.
 
-Pointer mechanisms per ecosystem, executable checks, and the hit/miss/fetch protocol: **`reference/dependency-cache.md`**.
+1. **Query the store first** for every install, resolve, or download. A hit is used as-is; no online reinstall.
+2. **Exactly one store per ecosystem, and no second payload tree anywhere.** A per-project `node_modules`, a per-build `.venv`, a per-variant `vendor/`, a per-target copy of a package store — same defect, whichever directory it lands in, including inside `<BUILD_ROOT>`.
+3. **Consumers link, they do not copy** — a junction, symlink, or configured pointer at most, resolving into the store. Shared **bytes**, not a nominal "it is cached too".
+4. **Never clean, delete, reorganise, or overwrite the store**, and never delete a *linked* dependency directory — a recursive delete punches through the junction into the shared store.
+5. **Confirm closure before building.** Unsatisfiable closure → **stop and report the missing list**; "reinstall dependencies" is not a repair step. Fetching is an exception needing explicit human authorisation, and the payload still lands in the store.
+
+Where the store is, how to prove convergence, and the hit/miss/fetch protocol: **`reference/dependency-cache.md`**.
 
 ---
 
@@ -145,7 +148,7 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 ```
 
 1. **One build-output root** (`<BUILD_ROOT>`, default `cxbuild/`): desktop, web, app, packaging, installers, unpacked directories, and "one-click open" conveniences such as a launcher `.bat`.
-2. **One dependency pointer** (§3). No secondary caches, no vendor trees, no nested installs.
+2. **One dependency pointer** (§3). No secondary store, no vendor tree, no nested install, and no dependency folder that exists only for one build, target, or variant.
 3. **Scratch only in `<TMP>`** (`temp/`). Intermediates in the project root or in `src/` are a defect.
 4. **Documentation split**: audience-facing → `docs/`; developer/maintenance → `dev-docs/`. Do not mix.
 5. **No half-migrations**: when moving an output path, update every script reference in the same change.
@@ -177,9 +180,9 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 ## 9. Red lines
 
 - **Starting any edit, build, install, or deletion while the boundary is unresolved** — `<PLACEHOLDER>` tokens present, no boundary file, or an empty local profile block. Interview first (§0.2).
-- Installing dependencies inside a project, or fetching from the network when the cache could satisfy the closure.
-- Deleting a linked dependency directory, or running a "clean" command against cache-backed artifacts.
-- Copying or creating dependency payloads inside any project.
+- Installing dependencies inside a project, or fetching from the network when the store could satisfy the closure.
+- Deleting a linked dependency directory, or running a "clean" command against store-backed artifacts.
+- Creating a dependency payload — a second store, or a folder with its own dependencies per project, build, target, or variant.
 - Sending judgement work to a cheap model to save money (architecture, trade-offs, security).
 - Faking model routing with fields the session does not expose.
 - Hand-writing colour constants or starting a parallel design language.
