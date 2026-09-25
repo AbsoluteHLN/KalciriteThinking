@@ -7,6 +7,31 @@ changed, so a version bump is never the only signal.
 Versioning is on the **portable rule text**, not on the repository: a layout change
 or a README rewrite does not move it, a change to the discipline does.
 
+## 3.7
+
+**The store is the only place dependencies are installed and used from.** 3.6
+kept the store as the single converged location; 3.7 states the constraint in
+its exclusive form: installing and using dependencies happen *only* in the
+shared store — every install is pinned so its payload lands there, every
+consumer resolves through a link into it, and use or install anywhere else
+(project-local payload, per-software location, the package manager's own
+default location) is a violation even when it works.
+
+- **`SKILL.md`** §3 is retitled "One dependency store — installed and used only
+  there; one big folder per ecosystem, closed top level"; the opening paragraph
+  now states the exclusivity up front; rule 1 is rewritten to "only the store —
+  query it first, and everything lands there" (the authorised-fetch exception of
+  rule 6 still lands in the store); the §0.4 non-negotiable and the §9 red line
+  are rephrased from "no payloads outside" to "use and install only in the
+  store"; the frontmatter description carries the same wording.
+- **`reference/dependency-cache.md`**: title and opening state the exclusivity;
+  consequence 2 extends "consumers link" with "and installs land in the store,
+  nowhere else"; hard rule 1 extends to "query the store first, and install only
+  into it".
+- **`reference/host-adapters.md`**: the injection bullet and the recommended
+  rule set's dependency-payload trigger now carry the use/install-only-in-the
+  store statement.
+
 ## 3.6
 
 **The store is one big folder, closed at the top.** 3.3 forbade per-project,

@@ -1,9 +1,9 @@
 ---
 name: kalcirite-project-rules
-description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, one big dependency store folder per ecosystem that every project, build, variant, and software links into (no per-project, per-build, or per-software payloads; the store's top level stays closed), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
+description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, one big dependency store folder per ecosystem that is the only place dependencies are installed and used from, with every project, build, variant, and software linking into it (no per-project, per-build, or per-software payloads; the store's top level stays closed), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
 whenToUse: "Working in or delegating work inside a repository that shares a machine-level dependency cache, a canonical UI source, or a shared tool catalogue; installing/building dependencies; resetting or extending a UI; deciding where a reusable plugin or tool belongs; reorganizing project structure and build output; or delegating to cheaper models. Also when adopting this skill on a new machine — that requires the first-run interview (§0.2) before any work."
 metadata:
-  version: "3.6"
+  version: "3.7"
   kind: "portable-rules"
   scope: "per-machine"
   config: "PROJECT-BOUNDARY.md — project root, then the kalcirite-project-boundary skill, then this skill's directory, then the agent config root (§0.1)"
@@ -77,7 +77,7 @@ Never edit the generated boundary file — the next export overwrites it. **Blan
 ### 0.4 Non-negotiables
 
 - **Build first, verify once.** Do not loop build→verify→build.
-- **No per-project, per-build, or per-software dependency payloads.** One big store folder per ecosystem, linked in — the store's own top level stays closed too.
+- **Dependencies are installed and used only in the shared store.** One big store folder per ecosystem; consumers link in, and nothing outside the store installs or holds a payload — the store's own top level stays closed too.
 - **Reuse before rebuild.** UI and tools are found, not re-invented.
 - **No claim without evidence.** Unobserved capability is unverified capability.
 - **No work before the machine is known.** Interview first (§0.2), then act.
@@ -108,13 +108,13 @@ Full procedure, the host-facts table, and a reusable prompt skeleton: **`referen
 
 ---
 
-## 3. One dependency store — one big folder, converged, never per-build, never per-software
+## 3. One dependency store — installed and used only there; one big folder per ecosystem, closed top level
 
-`<DEP_CACHE>` is the single dependency root on this machine; if it is blank, no dependency work happens at all. Inside it there is **one big folder per ecosystem** — one pnpm store, one cargo registry, one npm cache, one pip cache, one electron cache — and every project, build target, variant, *and software* on this machine resolves its dependencies out of those same folders and links into them.
+`<DEP_CACHE>` is the single dependency root on this machine; if it is blank, no dependency work happens at all. **Everything about dependencies — installing them and using them — happens only in that store**: every install is pinned so its payload lands in the store, and every project, build target, variant, *and software* on this machine resolves its dependencies through a link into it. Inside the store there is **one big folder per ecosystem** — one pnpm store, one cargo registry, one npm cache, one pip cache, one electron cache.
 
 **The rule is convergence, not caching.** *One folder with its own dependencies per build* is the defect this rule forbids — and so is *one sibling folder per software* ("the dependencies of X") placed next to the real store: N payload trees, or N per-software forks, are N versions of the truth, and they drift apart. Convergence runs down two axes at once: across projects/builds/variants, **and** across the software that lives on the machine.
 
-1. **Query the store first** for every install, resolve, or download. A hit is used as-is; no online reinstall.
+1. **Only the store — query it first, and everything lands there.** Every install, resolve, and download goes to the store first; a hit is used as-is, and an authorised fetch (rule 6) lands in the store as well. A dependency used or installed anywhere else — a project-local payload, a per-software sibling, the package manager's own default location — is a violation, even when it "works".
 2. **Exactly one store per ecosystem, and no second payload tree anywhere.** A per-project `node_modules`, a per-build `.venv`, a per-variant `vendor/`, a per-target copy of a package store — same defect, whichever directory it lands in, including inside `<BUILD_ROOT>`. A per-software sibling at the top level of the store (a virtual store or payload named after one program) is the same defect one level up.
 3. **Consumers link, they do not copy** — a junction, symlink, or configured pointer at most, resolving into the store. Shared **bytes**, not a nominal "it is cached too".
 4. **The store's top level is closed and documented.** A top-level entry in `<DEP_CACHE>` is an ecosystem store/cache, or declared infrastructure (runtimes, build caches, quarantine). The store keeps a guide at its root listing every entry and what may write there; a new top-level payload named after a software or a project is a failure signal, exactly like a `node_modules` inside a project.
@@ -193,7 +193,7 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 ## 9. Red lines
 
 - **Starting any edit, build, install, or deletion while the boundary is unresolved** — `<PLACEHOLDER>` tokens present, no boundary file, or an empty local profile block. Interview first (§0.2).
-- Installing dependencies inside a project, or fetching from the network when the store could satisfy the closure.
+- Using or installing dependencies anywhere but the shared store — a project-local payload, a per-software sibling store, or the package manager's own default location — or fetching from the network when the store could satisfy the closure.
 - Deleting a linked dependency directory, or running a "clean" command against store-backed artifacts.
 - Creating a dependency payload — a second store, or a folder with its own dependencies per project, build, target, variant, or software (including a per-software store placed beside the real one at the top level of the dependency cache).
 - Sending judgement work to a cheap model to save money (architecture, trade-offs, security).

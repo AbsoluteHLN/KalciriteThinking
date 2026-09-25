@@ -52,7 +52,7 @@ The adapter code itself is not here — it lives in the shared tool catalogue as
 
 1. **Build first, verify once.** Complete the change, build it, then run one central verification pass.
 2. **Route by reasoning depth, not by task size.** Cheap models read; strong models judge. Discover routes, never guess names, never leave the authorised provider.
-3. **One dependency store — one big folder, machine-wide.** One store per ecosystem (pnpm / cargo / npm / pip), shared by every project, build, variant, and software, and linked in. No per-project, per-build, or per-variant payload — and no "dependencies of X" sibling at the top level of the store.
+3. **One dependency store — one big folder, machine-wide, and the only place dependencies are installed and used from.** One store per ecosystem (pnpm / cargo / npm / pip), shared by every project, build, variant, and software: installs are pinned so their payload lands in the store, and consumers link into it. No per-project, per-build, or per-variant payload — and no "dependencies of X" sibling at the top level of the store.
 4. **One canonical UI source.** Integrate it and follow its contract; project CSS carries layout only, never colour.
 5. **Reuse before rebuild.** Search the shared catalogue; if it is missing, build it inside the catalogue on the existing boundaries.
 6. **One clean layout.** `src/ docs/ dev-docs/ verify-evidence/ cxbuild/ temp/`. One build-output root, one scratch root.

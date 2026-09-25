@@ -1,4 +1,4 @@
-# One dependency store — one big folder, never per-build, never per-software
+# One dependency store — installed and used only there; one big folder, never per-build, never per-software
 
 Read this when: installing, resolving, updating, or downloading any dependency; when
 a build reports missing packages; or when you suspect more than one copy of a
@@ -6,6 +6,12 @@ dependency tree on the machine.
 
 `<DEP_CACHE>` is the single dependency root on this machine. If it is blank, no
 dependency work happens at all: stop and report.
+
+The store is the **only place dependencies are installed and used from**: every
+install is pinned so its payload lands there, and every consumer resolves through
+a link into it. A dependency used or installed anywhere else — a project-local
+payload, a per-software location, or the package manager's own default location —
+is a violation, even when it "works".
 
 ## What convergence means
 
@@ -25,9 +31,10 @@ Three consequences — and a fourth that applies to the store's own top level:
 1. **One payload per ecosystem.** A second content-addressed store, a second
    registry index, or a second virtual tree is the same defect as a per-project
    `node_modules`: another version of the truth that drifts.
-2. **Consumers link, they do not copy.** The project holds a junction / symlink /
-   configured pointer that resolves into the store — shared **bytes**, not "it is
-   cached elsewhere too".
+2. **Consumers link, they do not copy — and installs land in the store,
+   nowhere else.** The project holds a junction / symlink / configured pointer
+   that resolves into the store; every package manager is pinned so new payloads
+   land in the store. Shared **bytes**, not "it is cached elsewhere too".
 3. **No payload exists only for one build.** `cxbuild/<target>/node_modules`, a
    per-variant `vendor/`, an unpacked bundle carrying its own dependency tree — all
    of it is *one folder per build*, the exact pattern this rule forbids. Build
@@ -47,9 +54,11 @@ Three consequences — and a fourth that applies to the store's own top level:
 
 ## Hard rules
 
-1. **Query the store first** for every install, resolve, or download (package
-   managers, language toolchains, app bundlers). Store hit → use it. No online
-   reinstall.
+1. **Query the store first, and install only into it.** Every install, resolve,
+   or download (package managers, language toolchains, app bundlers) goes to the
+   store first, and any new payload lands **in the store** — never in a project,
+   a per-software location, or the tool's own default location. Store hit → use
+   it. No online reinstall.
 2. **No dependency payload outside the store.** `node_modules`, `.venv`, vendored
    dependency trees, toolchain caches exist **only** in `<DEP_CACHE>` — a project,
    a build, or a variant may hold a junction / symlink / configured pointer at

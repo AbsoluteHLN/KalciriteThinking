@@ -60,9 +60,10 @@ Inject, as one self-contained block:
   is active;
 - the absolute boundary path and the project root actually in use;
 - the layout contract — build root, scratch root, evidence root, docs roots;
-- the dependency cache path, and the explicit statement that a dependency payload
-  is never created inside a project, nor as a per-software sibling at the top
-  level of the store;
+- the dependency cache path, and the explicit statement that dependencies are
+  **installed and used only there** — a dependency payload is never created
+  inside a project, installs are pinned into the store, and there is never a
+  per-software sibling at the top level of the store;
 - the shared tool catalogue and canonical UI source, when configured;
 - the accepted top-level set, **or** a pointer to where it is enforced;
 - the protected roots (the cache, the catalogue, the UI source, anything the
@@ -94,7 +95,7 @@ A refusal that only says "denied" is a bug report, not an instruction.
 
 | Rule | Trigger | Severity |
 |---|---|---|
-| dependency payload outside the store | creating `node_modules` / `.venv` / `vendor` / a second store directory anywhere in the project — **including under the build root**, where a per-build payload is exactly what the rules forbid; and a per-software store or payload placed beside the real one at the top level of the store | block |
+| dependency payload outside the store | creating `node_modules` / `.venv` / `vendor` / a second store directory anywhere in the project — **including under the build root**, where a per-build payload is exactly what the rules forbid; and a per-software store or payload placed beside the real one at the top level of the store; dependencies must be installed and used only in the shared store | block |
 | build output outside the build root | creating `dist` / `build` / `out` / `target` / `release` outside `<BUILD_ROOT>` | block |
 | new top-level entry | creating a top-level name outside the accepted set | block (warn-once is acceptable) |
 | protected root touched | a delete command whose text matches a protected root | block |
