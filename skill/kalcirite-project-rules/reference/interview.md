@@ -23,7 +23,7 @@ back. An answer that lives only in the conversation is lost.
 |---|---|---|
 | 1. Ask | the agent, once, in one batch | the answers |
 | 2. Record | the agent | the machine-config document — one hand-edited, human-facing document (the rules repository ships a `MACHINE-CONFIG` template showing its shape) |
-| 3. Export + install | the rules repository's exporter, then its installer (PowerShell) — **or the agent itself, on any host, with its own file tools** | `PROJECT-BOUNDARY.md` in the skill directory |
+| 3. Export + install | the rules repository's exporter, then its installer (PowerShell) — **or the agent itself, on any host, with its own file tools** | the boundary file inside the boundary skill (two-skill shape, §0.1 step 2), or next to `SKILL.md` (single-skill shape, §0.1 step 3) |
 
 The paths to the exporter, the installer and the template are **not** in this file: they
 are recorded in §0 of the machine-config document itself, so the rule text stays
@@ -74,12 +74,15 @@ Rules:
    when the block is absent or unparseable — a hand-written file with rows alone is
    a supported case. Readers **drop empty values** either way.
 3. **`GENERATED`** records provenance (source document, date, tool or agent).
-4. **Placement** follows `SKILL.md` §0.1: project root (highest), the skill's own
-   directory, the agent config root.
-5. **Install = copy**: the skill directory goes to the host's skill root, the
-   boundary file lands next to `SKILL.md`, and — whenever `SKILL.md` is writable —
-   its `kalcirite:local-profile` block gets the same key values (the last-resort
-   fallback for hosts with no boundary support).
+4. **Placement** follows `SKILL.md` §0.1: project root (highest), the boundary
+   skill's directory, the rules skill's own directory, the agent config root.
+5. **Install = copy**: the rules skill directory and the boundary skill directory
+   go to the host's skill root side by side (two-skill shape), with the boundary
+   file inside the boundary skill; the single-skill shape instead puts the
+   boundary file next to `SKILL.md`. And — whenever `SKILL.md` is writable — its
+   `kalcirite:local-profile` block gets the same key values (the last-resort
+   fallback for hosts with no boundary support; on a clean two-skill install it
+   is left empty).
 
 The PowerShell scripts in the rules repository are one correct implementation of
 this contract on Windows, not the contract itself.

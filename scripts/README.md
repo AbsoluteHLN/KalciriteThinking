@@ -31,8 +31,11 @@ Parameters: `-Target` (required), `-Source`, `-FromBoundary`, `-Force`, `-WhatIf
 
 Behaviour worth knowing:
 
-- **No `-FromBoundary` and no boundary already installed → it stops** and prints the three
-  commands. There is no interactive mode; the interview belongs to the agent (rule text §0.2).
+- **No `-FromBoundary` and no boundary already installed → clean install**: rule text
+  only, local profile left empty. That is the first-class shape for a two-skill
+  machine (the boundary values then come from the `kalcirite-project-boundary`
+  skill, §0.1 step 2). There is no interactive mode; the interview belongs to the
+  agent (rule text §0.2).
 - Every row is present in an unedited template, so a copied-but-unfilled document exports
   cleanly. The installer therefore rejects any value that is literally `<...>`, and refuses an
   empty `DEP_CACHE` outright.

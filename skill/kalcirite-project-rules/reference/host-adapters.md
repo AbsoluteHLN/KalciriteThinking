@@ -29,11 +29,19 @@ hit:
 
 1. project root — `<cwd>/PROJECT-BOUNDARY.md`, or a `PROJECT-BOUNDARY` section in
    the project's `AGENTS.md` / `.kalcirite/boundary.md`;
-2. the skill's own directory — `PROJECT-BOUNDARY.md` beside `SKILL.md`;
-3. agent config root — `$DSH_HOME/PROJECT-BOUNDARY.md`, `~/.claude/PROJECT-BOUNDARY.md`,
+2. the boundary skill — `PROJECT-BOUNDARY.md` inside the sibling
+   `kalcirite-project-boundary` skill, in the same skill root the rules skill was
+   loaded from (the dedicated machine boundary on a two-skill machine);
+3. the rules skill's own directory — `PROJECT-BOUNDARY.md` beside its `SKILL.md`
+   (legacy single-skill install);
+4. agent config root — `$DSH_HOME/PROJECT-BOUNDARY.md`, `~/.claude/PROJECT-BOUNDARY.md`,
    `~/.codex/PROJECT-BOUNDARY.md`, …;
-4. the `kalcirite:local-profile` block inside the loaded `SKILL.md`;
-5. domain defaults.
+5. the `kalcirite:local-profile` block inside the loaded `SKILL.md`;
+6. domain defaults.
+
+An adapter that resolves from file paths only checks step 2 and step 3 for each
+skill root it knows: the boundary skill's directory first, then the rules skill's
+own directory.
 
 Read the `kalcirite:answers` JSON block when it is present; it is authoritative.
 Fall back to the markdown rows only when the block is absent, unparseable, or
@@ -53,7 +61,8 @@ Inject, as one self-contained block:
 - the absolute boundary path and the project root actually in use;
 - the layout contract — build root, scratch root, evidence root, docs roots;
 - the dependency cache path, and the explicit statement that a dependency payload
-  is never created inside a project;
+  is never created inside a project, nor as a per-software sibling at the top
+  level of the store;
 - the shared tool catalogue and canonical UI source, when configured;
 - the accepted top-level set, **or** a pointer to where it is enforced;
 - the protected roots (the cache, the catalogue, the UI source, anything the
@@ -85,7 +94,7 @@ A refusal that only says "denied" is a bug report, not an instruction.
 
 | Rule | Trigger | Severity |
 |---|---|---|
-| dependency payload outside the store | creating `node_modules` / `.venv` / `vendor` / a second store directory anywhere in the project — **including under the build root**, where a per-build payload is exactly what the rules forbid | block |
+| dependency payload outside the store | creating `node_modules` / `.venv` / `vendor` / a second store directory anywhere in the project — **including under the build root**, where a per-build payload is exactly what the rules forbid; and a per-software store or payload placed beside the real one at the top level of the store | block |
 | build output outside the build root | creating `dist` / `build` / `out` / `target` / `release` outside `<BUILD_ROOT>` | block |
 | new top-level entry | creating a top-level name outside the accepted set | block (warn-once is acceptable) |
 | protected root touched | a delete command whose text matches a protected root | block |

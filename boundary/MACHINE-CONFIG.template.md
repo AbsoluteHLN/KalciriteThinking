@@ -1,6 +1,6 @@
 # 本机配置（模板）
 
-> **一台机器的全部专有事实，只写在这一份文档里。** 它属于操作者，不属于这个仓库：放在仓库外（例如与本仓库平级的 `<上级目录>\KalciriteThinking-local\MACHINE-CONFIG.zh.md`），或用本仓库 `.gitignore` 排除。
+> **一台机器的全部专有事实，只写在这一份文档里。** 它属于操作者，不属于这个仓库：放在仓库外（例如与本仓库平级的 `<上级目录>\KalciriteThinking-private\MACHINE-CONFIG.zh.md`，另发布于私有仓库），或用本仓库 `.gitignore` 排除。
 > 通用层（规则正文、模板、脚本、示例）不含任何本机路径，可以直接给别人。
 >
 > 工具读的那一份是 `PROJECT-BOUNDARY.md`，由 [`../scripts/export-boundary.ps1`](../scripts/export-boundary.ps1) 从**下面这些键值表**导出。

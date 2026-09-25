@@ -18,7 +18,7 @@
 
 ### 本机配置单独成文
 
-机器相关的事实**不写进规则正文，也不散落在各处**，而是集中在一份文档里。这一份刻意放成本仓库的**兄弟目录**，例如 `<上级目录>\KalciriteThinking-local\MACHINE-CONFIG.zh.md`：不在仓库树内（仓库 `.gitignore` 另外兜底排除 `local/`），放进版本控制就等于把一台机器的路径、账号、端口发布出去。
+机器相关的事实**不写进规则正文，也不散落在各处**，而是集中在一份文档里。这一份刻意放成本仓库的**兄弟目录**，例如 `<上级目录>\KalciriteThinking-private\MACHINE-CONFIG.zh.md`（本机层，另发布于一个**私有**仓库）：不在仓库树内（仓库 `.gitignore` 另外兜底排除 `local/` 与 `private/`），放进公开版本控制就等于把一台机器的路径、账号、端口发布出去。
 
 - **一份文档，一个位置。** 路径、端口、缓存、模型路由这类事实只在该文档里出现一次；规则正文永远环境中性，按 §0.1 的顺序解析取值。
 - **工具读的那份是派生物。** `export-boundary.ps1` 从文档的键值表生成 `PROJECT-BOUNDARY.md`：保留 `##` 分节、丢掉第三列说明、附上 `kalcirite:answers` JSON 块。安装脚本与宿主适配器都只读这一份，所以「人写的值」和「工具读的值」不会各说各话。
@@ -27,6 +27,14 @@
 - **换机器只改这一份。** 规则正文、模板、脚本、适配器都不用动。
 
 本机层的文档是**一份已经填好的答案**，不是规则的一部分。
+
+### 两个技能：通用版 + 边界版
+
+本机层把导出的边界文件发布为一个独立技能 —— `kalcirite-project-boundary`（私有仓库，一台机器一个）：它**只含**这台机器对通用版的补充边界值，不含任何规则正文，与通用技能 `kalcirite-project-rules` 装进**同一个 skill 根目录**。于是：
+
+- 技能目录里两个技能并排，通用版**干净安装**（不含本机数据，公开仓库永远干净）；
+- 取值时按 §0.1 第 2 顺位从边界技能目录找到 `PROJECT-BOUNDARY.md`（第 3 顺位仍是「与 `SKILL.md` 同目录」，供单技能安装的老形状）；
+- 没有边界技能也能用：单技能安装把边界文件放进通用技能目录，行为与从前一致。
 
 ## 仓库结构
 
@@ -44,7 +52,7 @@
 
 1. **先构建，后一次验证**：改动做完整 → 构建 → 集中一次验证。
 2. **按推理深度路由，而非按任务大小**：廉价模型读、强模型判断；先发现路由，不猜模型名，不越出授权提供方。
-3. **唯一依赖库（全机收敛）**：每个生态一套库（pnpm / cargo / npm / pip），全机共用、链接取用；项目里、构建里、变体里都不允许各自一份依赖。
+3. **唯一依赖库（全机一个大文件夹）**：每个生态一套库（pnpm / cargo / npm / pip），全机共用、链接取用；项目里、构建里、变体里都不允许各自一份依赖，依赖库顶层也不允许并列存放「某个软件用的依赖」。
 4. **唯一 UI 上游**：接入并遵守其契约；项目样式表只管布局，不管配色。
 5. **先复用后新建**：先查公共工具库；确实没有，也在库内按既有边界新建。
 6. **干净目录**：`src/ docs/ dev-docs/ verify-evidence/ cxbuild/ temp/`，一个构建产物根、一个临时根。
@@ -73,11 +81,11 @@ Copy-Item .\boundary\MACHINE-CONFIG.template.md ..\MACHINE-CONFIG.md
 & .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -Force
 ```
 
-安装脚本**没有交互模式**：交互这件事属于 agent，规则正文 §0.2 规定了它的入口和问法。若既没给 `-FromBoundary`、目标位置也没有现成的边界文件，脚本会停下来并打印上面那三条命令。
+安装脚本**没有交互模式**：交互这件事属于 agent，规则正文 §0.2 规定了它的入口和问法。若既没给 `-FromBoundary`、目标位置也没有现成的边界文件，脚本执行**干净安装**：只复制规则正文、`local-profile` 块留空 —— 这是两技能形状下的一等安装模式（边界值由 `kalcirite-project-boundary` 技能提供，§0.1 第 2 顺位解析）。
 
 ### 任意宿主都能装：Codex / Claude Code / DSH / 其他
 
-规则正文本身**不绑定任何宿主**：没有宿主工具名、没有宿主路径、没有插件机制假设。任何支持开放 `SKILL.md` 技能格式的宿主，把 `skill/kalcirite-project-rules/` 目录拷进它的技能目录、把 `PROJECT-BOUNDARY.md` 放在 `SKILL.md` 旁边即可：
+规则正文本身**不绑定任何宿主**：没有宿主工具名、没有宿主路径、没有插件机制假设。任何支持开放 `SKILL.md` 技能格式的宿主，把 `skill/kalcirite-project-rules/` 目录拷进它的技能目录即可 —— 单技能形状再把 `PROJECT-BOUNDARY.md` 放在 `SKILL.md` 旁边，两技能形状把边界文件放进并排的 `kalcirite-project-boundary/` 技能目录：
 
 | 宿主 | 项目级 | 全局 |
 |---|---|---|
@@ -89,7 +97,7 @@ Copy-Item .\boundary\MACHINE-CONFIG.template.md ..\MACHINE-CONFIG.md
 
 它填的 `MACHINE-CONFIG.md` 有八节：宿主与环境、依赖缓存、UI 上游、工具库、目录契约、模型路由、子代理与委派、项目专有例外。问题清单与写法见 [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md)，子代理/模型选用的细节见 [`reference/delegation.md`](skill/kalcirite-project-rules/reference/delegation.md)（通用记法）与 [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md)（DSH 实测答案）。
 
-答案会写回两处：技能目录内的 `PROJECT-BOUNDARY.md`（就近解析，§0.1 第 2 顺位）和已安装 `SKILL.md` 里的 `local-profile` 块。**留空是合法答案**，含义是「不作假设」—— 规则会停下来报告，而不是去猜。项目级例外再放一份 `<项目根>/PROJECT-BOUNDARY.md`，效力最高。
+答案的落点按 §0.1 解析：两技能形状下在边界技能目录的 `PROJECT-BOUNDARY.md`（第 2 顺位），单技能形状下在技能目录内（第 3 顺位）；已安装 `SKILL.md` 里的 `local-profile` 块是兜底（第 5 顺位），干净安装下留空。**留空是合法答案**，含义是「不作假设」—— 规则会停下来报告，而不是去猜。项目级例外再放一份 `<项目根>/PROJECT-BOUNDARY.md`，效力最高（第 1 顺位）。
 
 `-Force` 之前，脚本会拒绝任何取值字面写成 `<...>` 的文档，也会直接拒掉空的 `DEP_CACHE`；手写的旧边界文件在没给 `-Force` 时不会被覆盖。
 

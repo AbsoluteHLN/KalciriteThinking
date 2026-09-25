@@ -7,6 +7,57 @@ changed, so a version bump is never the only signal.
 Versioning is on the **portable rule text**, not on the repository: a layout change
 or a README rewrite does not move it, a change to the discipline does.
 
+## 3.6
+
+**The store is one big folder, closed at the top.** 3.3 forbade per-project,
+per-build, and per-variant payloads; 3.6 closes the same rule one level up:
+all of a machine's dependencies live in one big folder per ecosystem, and a
+sibling entry that is "the dependencies of software X" at the top of the store
+is forbidden too.
+
+- **`SKILL.md` §3** is retitled "One dependency store — one big folder, never
+  per-build, never per-software" and gains rule 4: *the store's top level is
+  closed and documented* — a top-level entry is an ecosystem store/cache or
+  declared infrastructure, the store keeps a guide at its root listing every
+  entry and what may write there, and a new top-level payload named after a
+  software or a project is a failure signal.
+- **`reference/dependency-cache.md`**: consequence 4 (closed top level — a
+  per-software sibling forks the store), hard rule 3 (the store is guided; a
+  new top-level entry is a decision recorded in the guide), convergence check
+  4 (compare the store's top level against the guide), and "why a second
+  payload tree is a defect" extended to the per-software case.
+- **`reference/host-adapters.md`**: the recommended rule set's
+  dependency-payload trigger now also covers a per-software store at the top
+  level of the store; the injected text must say so.
+- `SKILL.md` §0.4, §9, and the frontmatter description aligned.
+
+## 3.5
+
+**Two skills: rules + local boundary.** The machine's values get their own
+skill, `kalcirite-project-boundary` (published in a private, per-machine
+repository). The generic skill is installed clean — no machine data ships in
+the public edition, and none is required in it.
+
+- **`SKILL.md` §0.1** gains resolution step 2: *the boundary skill* —
+  `PROJECT-BOUNDARY.md` inside the sibling skill `kalcirite-project-boundary`
+  in the same skill root. Where both are present it wins over the legacy
+  in-skill-directory location, which becomes step 3 and is kept for
+  single-skill installs.
+- **§0.2 gate** rephrased: proceed only when a boundary file resolves with no
+  placeholders **or** the local profile is filled; an empty profile is no
+  longer by itself a stop condition — that is the normal clean-install state.
+- Frontmatter `config` / `localProfile` lines updated to match; the
+  empty-profile block text explains the two-skill install.
+- **`install-skill.ps1`**: a clean install (no boundary anywhere) is a
+  first-class mode — rule text only, profile left empty — instead of
+  throwing.
+- **`reference/interview.md`**: the flow's install step and the shape
+  contract (placement, install-equals-copy) describe the two-skill and
+  single-skill shapes.
+- **`reference/host-adapters.md` §1**: the resolution list is updated to
+  match the rule text; a file-path-resolving adapter checks the boundary
+  skill's directory before the rules skill's own directory, per skill root.
+
 ## 3.4
 
 **The skill is now host-neutral on its face.** The goal: Codex, DeepSeek

@@ -18,7 +18,7 @@ This is my first real attempt at formalising a discipline like this. It is not g
 
 ### The machine config is its own document
 
-Machine facts are **not written into the rule text, and not scattered around**: they live in one document. That document is deliberately a **sibling directory** of this repository rather than a subdirectory of it, e.g. `<parent>\KalciriteThinking-local\MACHINE-CONFIG.md` (the repository's `.gitignore` also excludes `local/` as a safety net) — committing it would publish one machine's paths, accounts and ports.
+Machine facts are **not written into the rule text, and not scattered around**: they live in one document. That document is deliberately a **sibling directory** of this repository rather than a subdirectory of it, e.g. `<parent>\KalciriteThinking-private\MACHINE-CONFIG.md` (the machine layer, published in a separate **private** repository; the repository's `.gitignore` also excludes `local/` and `private/` as a safety net) — committing it to a public repo would publish one machine's paths, accounts and ports.
 
 - **One document, one place.** Paths, ports, caches and model routes appear there exactly once; the rule text stays environment-neutral and resolves values through its §0.1 order.
 - **What the tools read is derived.** `export-boundary.ps1` turns the document's key/value tables into `PROJECT-BOUNDARY.md`: it keeps the `##` sections, drops the third commentary column and appends the `kalcirite:answers` JSON block. The installer and the host adapter read only that file, so the hand-written values and the machine-read values cannot drift apart.
@@ -27,6 +27,14 @@ Machine facts are **not written into the rule text, and not scattered around**: 
 - **Moving machine touches only this document.** Rule text, templates, scripts and adapter stay put.
 
 The local documents are *a filled-in answer sheet*, not part of the rules.
+
+### Two skills: the rules skill + the boundary skill
+
+The machine layer publishes its exported boundary file as a skill of its own — `kalcirite-project-boundary` (a private, per-machine repository). It carries **only** this machine's supplementary boundary values — no rule text — and installs into the **same skill root** as the generic skill. So:
+
+- the two skills sit side by side in the skill root, and the generic one is installed **clean** (the public repository never contains machine data);
+- values resolve from the boundary skill's directory at §0.1 step 2 (step 3 stays "beside `SKILL.md`" for the legacy single-skill install shape);
+- a machine without the boundary skill still works: the single-skill install puts the boundary file inside the rules skill's directory, exactly as before.
 
 ## Repository layout
 
@@ -44,7 +52,7 @@ The adapter code itself is not here — it lives in the shared tool catalogue as
 
 1. **Build first, verify once.** Complete the change, build it, then run one central verification pass.
 2. **Route by reasoning depth, not by task size.** Cheap models read; strong models judge. Discover routes, never guess names, never leave the authorised provider.
-3. **One dependency store, converged.** One store per ecosystem (pnpm / cargo / npm / pip), shared by every project, build, and variant, and linked in. No per-project, per-build, or per-variant payload.
+3. **One dependency store — one big folder, machine-wide.** One store per ecosystem (pnpm / cargo / npm / pip), shared by every project, build, variant, and software, and linked in. No per-project, per-build, or per-variant payload — and no "dependencies of X" sibling at the top level of the store.
 4. **One canonical UI source.** Integrate it and follow its contract; project CSS carries layout only, never colour.
 5. **Reuse before rebuild.** Search the shared catalogue; if it is missing, build it inside the catalogue on the existing boundaries.
 6. **One clean layout.** `src/ docs/ dev-docs/ verify-evidence/ cxbuild/ temp/`. One build-output root, one scratch root.
@@ -73,11 +81,11 @@ Copy-Item .\boundary\MACHINE-CONFIG.template.md ..\MACHINE-CONFIG.md
 & .\scripts\sync-skill.ps1 -Target "$env:DSH_HOME\skills" -Force
 ```
 
-The installer has **no interactive mode**: the interview belongs to the agent, and rule text §0.2 defines its entry point and its questions. With no `-FromBoundary` and no boundary already installed, it stops and prints the three commands above.
+The installer has **no interactive mode**: the interview belongs to the agent, and rule text §0.2 defines its entry point and its questions. With no `-FromBoundary` and no boundary already installed, it performs a **clean install**: rule text only, local profile left empty — the first-class install shape for a two-skill machine, where the boundary values come from the `kalcirite-project-boundary` skill (§0.1 step 2).
 
 ### Any host can run it: Codex / Claude Code / DSH / others
 
-The rule text is bound to **no host**: no host tool names, no host paths, no plugin-mechanism assumptions. Any host that supports the open `SKILL.md` skill format just needs the `skill/kalcirite-project-rules/` directory in its skill directory and `PROJECT-BOUNDARY.md` beside `SKILL.md`:
+The rule text is bound to **no host**: no host tool names, no host paths, no plugin-mechanism assumptions. Any host that supports the open `SKILL.md` skill format just needs the `skill/kalcirite-project-rules/` directory in its skill directory — in the single-skill shape with `PROJECT-BOUNDARY.md` beside `SKILL.md`, in the two-skill shape with the boundary file inside a sibling `kalcirite-project-boundary/` skill directory:
 
 | Host | Project-level | Global |
 |---|---|---|
@@ -89,7 +97,7 @@ The two `.ps1` scripts are a convenience implementation of the "export + install
 
 The `MACHINE-CONFIG.md` you fill in has eight sections: host and environment, dependency cache, UI source, tool catalogue, layout contract, model routing, sub-agents and delegation, and project-specific exceptions. The question bank is in [`boundary/QUESTIONS.md`](boundary/QUESTIONS.md); the sub-agent / model-selection details are in [`reference/delegation.md`](skill/kalcirite-project-rules/reference/delegation.md) (generic recording) and [`boundary/hosts/dsh.md`](boundary/hosts/dsh.md) (the measured DSH answers).
 
-Answers land in two places: `PROJECT-BOUNDARY.md` inside the skill directory (nearest-hit resolution, §0.1 rule 2) and the `local-profile` block inside the installed `SKILL.md`. **Blank is a valid answer** meaning "no assumption" — the rules stop and report instead of guessing. A per-project `<project>/PROJECT-BOUNDARY.md` wins over both.
+Answers resolve per §0.1: in the two-skill shape from `PROJECT-BOUNDARY.md` inside the boundary skill (step 2), in the single-skill shape from the rules skill's own directory (step 3); the `local-profile` block inside the installed `SKILL.md` is the last-resort fallback (step 5) and stays empty on a clean install. **Blank is a valid answer** meaning "no assumption" — the rules stop and report instead of guessing. A per-project `<project>/PROJECT-BOUNDARY.md` wins over all of it (step 1).
 
 The installer rejects any document whose values are literally `<...>`, refuses an empty `DEP_CACHE` outright, and never overwrites a hand-written legacy boundary file without `-Force`.
 

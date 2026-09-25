@@ -16,7 +16,12 @@
                      SKILL.md, so agents without a host adapter still see the values
 
     Answers come from -FromBoundary, or from the boundary already installed in
-    the target. There is no interactive mode on purpose.
+    the target. With no boundary anywhere the script performs a CLEAN install:
+    rule text only, local profile left empty. That is the first-class install
+    shape for a two-skill machine, where the machine's values live in the
+    kalcirite-project-boundary skill (same skill root, resolved by section 0.1
+    step 2). Until a boundary resolves, section 0.2 gates the first work.
+    There is no interactive mode on purpose.
 
     This script is ASCII-only on purpose: Windows PowerShell 5.1 misreads
     non-ASCII script files that have no BOM.
@@ -29,7 +34,8 @@
 
 .PARAMETER FromBoundary
     Boundary file to install (its 'kalcirite:answers' block supplies the local
-    profile). Defaults to the boundary already installed in the target.
+    profile). Defaults to the boundary already installed in the target; with no
+    boundary anywhere the install is clean (rule text only).
 
 .PARAMETER Force
     Overwrite an installed boundary file that was not produced by the exporter.
@@ -181,6 +187,7 @@ $legacyBoundary = Join-Path $Target 'PROJECT-BOUNDARY.md'
 
 # 1. locate the answers ------------------------------------------------------
 $boundarySource = ''
+$cleanInstall   = $false
 if ($FromBoundary) {
     if (-not (Test-Path -LiteralPath $FromBoundary -PathType Leaf)) { throw "Boundary file not found: $FromBoundary" }
     $boundarySource = (Resolve-Path -LiteralPath $FromBoundary).Path
@@ -193,42 +200,46 @@ else {
         }
     }
     if (-not $boundarySource) {
-        throw @"
-No boundary file to install from.
-
-Run the first-run interview from the rule text (section 0.2), write the answers
-into this machine's config document, then export and install:
-
-  1. <config doc>   | `KEY` | value | ...   (see boundary/MACHINE-CONFIG.template.md)
-  2. & .\scripts\export-boundary.ps1 -Source <config doc> -Out <boundary file>
-  3. & .\scripts\install-skill.ps1 -Target "$Target" -FromBoundary <boundary file>
-"@
+        # A clean install is a first-class mode: the rules skill ships without machine
+        # values and the local profile stays empty. The machine's boundary then lives in
+        # the kalcirite-project-boundary skill (same skill root); rule text section 0.1
+        # resolves it as step 2. Until one resolves, section 0.2 gates the first work.
+        $cleanInstall = $true
+        Write-Host 'no boundary given or found: clean install (rule text only, local profile stays empty)'
     }
 }
 
-$answers = Get-AnswersFromBoundaryFile $boundarySource
-if (-not $answers) {
-    throw "No kalcirite:answers block in $boundarySource. Export it first: .\scripts\export-boundary.ps1 -Source <config doc> -Out $boundarySource"
-}
-if ($answers['DEP_CACHE'] -is [string] -and [string]::IsNullOrWhiteSpace($answers['DEP_CACHE'])) {
-    throw "DEP_CACHE is empty in ${boundarySource}: the dependency rule would have nothing to resolve."
+if ($cleanInstall -and (Test-Path -LiteralPath $boundaryOut -PathType Leaf) -and -not $Force) {
+    throw "A boundary file already exists at $boundaryOut but has no parseable kalcirite:answers block. Review it first, or re-run with -Force to replace the whole skill directory."
 }
 
-$boundaryText = Read-Utf8 $boundarySource
-if ($boundaryText -match '@[A-Z][A-Z0-9_]*@' -or $boundaryText -match '<PLACEHOLDER>') {
-    throw "Boundary file still holds unresolved placeholders: $boundarySource"
-}
-# An unedited template exports cleanly (every row is present), so the placeholder
-# test has to happen on the values: `<...>` is what the template ships with.
-$unresolved = @($answers.Keys | Where-Object { ([string]$answers[$_]).Trim() -match '^<.*>$' })
-if ($unresolved.Count -gt 0) {
-    throw ("Boundary still holds template placeholders (values are literally <...>): " + ($unresolved -join ', ') + "  ($boundarySource)")
+$answers = $null
+if (-not $cleanInstall) {
+    $answers = Get-AnswersFromBoundaryFile $boundarySource
+    if (-not $answers) {
+        throw "No kalcirite:answers block in $boundarySource. Export it first: .\scripts\export-boundary.ps1 -Source <config doc> -Out $boundarySource"
+    }
+    if ($answers['DEP_CACHE'] -is [string] -and [string]::IsNullOrWhiteSpace($answers['DEP_CACHE'])) {
+        throw "DEP_CACHE is empty in ${boundarySource}: the dependency rule would have nothing to resolve."
+    }
+
+    $boundaryText = Read-Utf8 $boundarySource
+    if ($boundaryText -match '@[A-Z][A-Z0-9_]*@' -or $boundaryText -match '<PLACEHOLDER>') {
+        throw "Boundary file still holds unresolved placeholders: $boundarySource"
+    }
+    # An unedited template exports cleanly (every row is present), so the placeholder
+    # test has to happen on the values: `<...>` is what the template ships with.
+    $unresolved = @($answers.Keys | Where-Object { ([string]$answers[$_]).Trim() -match '^<.*>$' })
+    if ($unresolved.Count -gt 0) {
+        throw ("Boundary still holds template placeholders (values are literally <...>): " + ($unresolved -join ', ') + "  ($boundarySource)")
+    }
 }
 
 $stamp   = (Get-Date).ToString('yyyy-MM-dd HH:mm')
 $version = Get-SkillVersion (Join-Path $Source 'SKILL.md')
 
-Write-Host "answers from    -> $boundarySource"
+if ($cleanInstall) { Write-Host 'answers from    -> (none - clean install)' }
+else { Write-Host "answers from    -> $boundarySource" }
 Write-Host "rule text       -> $Source (version $version)"
 
 # 2. install the rule text ---------------------------------------------------
@@ -253,20 +264,22 @@ if ($PSCmdlet.ShouldProcess($dest, 'Install rule text')) {
 }
 
 # 3. place the boundary and write the profile block back ---------------------
-if ($PSCmdlet.ShouldProcess($boundaryOut, 'Place machine boundary file')) {
-    if ($priorBoundaryText -and -not (Test-Path -LiteralPath ($boundaryOut + '.bak'))) {
-        Write-Utf8 ($boundaryOut + '.bak') $priorBoundaryText
+if (-not $cleanInstall) {
+    if ($PSCmdlet.ShouldProcess($boundaryOut, 'Place machine boundary file')) {
+        if ($priorBoundaryText -and -not (Test-Path -LiteralPath ($boundaryOut + '.bak'))) {
+            Write-Utf8 ($boundaryOut + '.bak') $priorBoundaryText
+        }
+        Write-Utf8 $boundaryOut $boundaryText
+        if (-not (Test-Path -LiteralPath $boundaryOut -PathType Leaf)) {
+            throw "boundary write-back failed, the install would be incomplete: $boundaryOut"
+        }
+        Write-Host "placed boundary -> $boundaryOut"
     }
-    Write-Utf8 $boundaryOut $boundaryText
-    if (-not (Test-Path -LiteralPath $boundaryOut -PathType Leaf)) {
-        throw "boundary write-back failed, the install would be incomplete: $boundaryOut"
-    }
-    Write-Host "placed boundary -> $boundaryOut"
-}
 
-if ($PSCmdlet.ShouldProcess($skillMd, 'Fill the local profile block')) {
-    Set-LocalProfileBlock $skillMd (New-LocalProfileBlock $answers $stamp $boundaryOut)
-    Write-Host "filled profile  -> $skillMd"
+    if ($PSCmdlet.ShouldProcess($skillMd, 'Fill the local profile block')) {
+        Set-LocalProfileBlock $skillMd (New-LocalProfileBlock $answers $stamp $boundaryOut)
+        Write-Host "filled profile  -> $skillMd"
+    }
 }
 
 if (Test-Path -LiteralPath $legacyBoundary -PathType Leaf) {
@@ -275,7 +288,17 @@ if (Test-Path -LiteralPath $legacyBoundary -PathType Leaf) {
     Write-Host '      the skill now reads the copy inside its own directory; the old file is left untouched'
 }
 
-Write-Host @"
+if ($cleanInstall) {
+    Write-Host @"
+
+next steps
+  1. install the boundary skill (kalcirite-project-boundary) into the same skill root
+  2. reload / restart the agent so the skill catalog picks the directory up
+  3. until a boundary resolves, rule text section 0.2 gates the first work
+  4. later rule-text updates:         sync-skill.ps1 -Target <same root> -Force
+"@
+} else {
+    Write-Host @"
 
 next steps
   1. review the boundary file:        $boundaryOut
@@ -283,3 +306,4 @@ next steps
   3. per project, add <project>\PROJECT-BOUNDARY.md only where values differ
   4. later rule-text updates:         sync-skill.ps1 -Target <same root> -Force
 "@
+}

@@ -1,4 +1,4 @@
-# One dependency store — converged, never per-build
+# One dependency store — one big folder, never per-build, never per-software
 
 Read this when: installing, resolving, updating, or downloading any dependency; when
 a build reports missing packages; or when you suspect more than one copy of a
@@ -9,8 +9,8 @@ dependency work happens at all: stop and report.
 
 ## What convergence means
 
-**One store per ecosystem, machine-wide** — not one store per project, and not one
-folder of dependencies per build:
+**One big folder per ecosystem, machine-wide** — not one store per project, not one
+folder of dependencies per build, and not one sibling folder per software:
 
 | Ecosystem | The one store | What every consumer does |
 |---|---|---|
@@ -20,7 +20,7 @@ folder of dependencies per build:
 | Python | the pip cache + the managed interpreter tree | site-packages live in the store; the project points at them |
 | Electron / bundlers | the binary caches (electron, electron-builder) | binaries are downloaded once, into the cache |
 
-Three consequences:
+Three consequences — and a fourth that applies to the store's own top level:
 
 1. **One payload per ecosystem.** A second content-addressed store, a second
    registry index, or a second virtual tree is the same defect as a per-project
@@ -34,6 +34,16 @@ Three consequences:
    output is **generated code, never dependencies**: if a packaged app must run
    standalone, its dependencies are produced into the build output from the store,
    not installed into it.
+4. **The store's top level is closed — one big folder, no per-software siblings.**
+   At the top level of `<DEP_CACHE>` there is one entry per ecosystem store or
+   cache, plus declared infrastructure (runtimes, build caches, quarantine). A
+   sibling entry that is "the dependencies of X" — a per-software virtual store, a
+   per-software package payload, a legacy duplicate of an existing cache — forks
+   the store, and the next consumer of that software forks it again. Convergence
+   runs down two axes at once: across projects/builds/variants, **and** across the
+   software that lives on the machine. The store keeps a **guide at its root**
+   (a README) listing every top-level entry, its role, and what may write there;
+   a new entry is a decision recorded in the guide, never a side effect.
 
 ## Hard rules
 
@@ -43,19 +53,24 @@ Three consequences:
 2. **No dependency payload outside the store.** `node_modules`, `.venv`, vendored
    dependency trees, toolchain caches exist **only** in `<DEP_CACHE>` — a project,
    a build, or a variant may hold a junction / symlink / configured pointer at
-   most.
-3. **Never clean, delete, reorganise, or overwrite the store.** Archive/quarantine
+   most. Likewise at the top level of the store itself: no per-software store or
+   payload beside the real one.
+3. **The store is guided and its top level closed.** The README at the store's root
+   lists every top-level entry and its role. Before creating a new top-level entry:
+   it must be an ecosystem store/cache or declared infrastructure, and it must be
+   added to the guide in the same change.
+4. **Never clean, delete, reorganise, or overwrite the store.** Archive/quarantine
    areas inside it are read-only.
-4. **Confirm closure before building.** If the closure cannot be satisfied from
+5. **Confirm closure before building.** If the closure cannot be satisfied from
    the store: **stop and report the missing list**. "Reinstall dependencies" is
    not a repair step.
-5. **Fetching is an exception with a gate.** If a package is genuinely absent,
+6. **Fetching is an exception with a gate.** If a package is genuinely absent,
    report the list, get explicit human authorisation, then bring the new payload
-   **into the store** and update the store index.
-6. **No shadow runtimes.** Interpreters and virtual environments must come from
+   **into the store** and update the store index and guide.
+7. **No shadow runtimes.** Interpreters and virtual environments must come from
    the store, not from a system Conda, a user-level cache, or a project-local
    `.venv`.
-7. **Never delete a linked dependency directory** — deleting a junction
+8. **Never delete a linked dependency directory** — deleting a junction
    recursively punches through into the shared store. Never run a toolchain's
    "clean" command on a store-backed build.
 
@@ -81,6 +96,10 @@ Get-ChildItem -Path <project> -Recurse -Force -Directory -ErrorAction SilentlyCo
 # 3. The store is the one root, machine-wide:
 pnpm config get store-dir ; npm config get cache
 $env:CARGO_HOME ; $env:PIP_CACHE_DIR
+# 4. The store's top level is closed: every entry is listed in the store guide.
+Get-ChildItem -Path <DEP_CACHE> -Directory | Select-Object -ExpandProperty Name
+#    compare against the top-level table in <DEP_CACHE>\README.md — anything
+#    not listed (especially a payload named after a software) is a defect.
 ```
 
 ```bash
@@ -94,6 +113,8 @@ readlink -f node_modules          # expect a path inside the store
 pnpm config get store-dir ; npm config get cache
 echo "$CARGO_HOME" "$PIP_CACHE_DIR"
 test -e "$DEP_CACHE" && echo present
+# 4. The store's top level is closed: compare against the store guide's table.
+ls -1 "$DEP_CACHE"                # every entry must be listed in $DEP_CACHE/README.md
 ```
 
 A payload-named directory **without** a link type, anywhere under the project, is a
@@ -117,9 +138,12 @@ modules (a common way junctions get destroyed): call the tool binary directly
 
 ## Why a second payload tree is a defect, wherever it lands
 
-A second payload tree — per project, per build, or per variant — is a second
-version of the truth. It goes stale silently, it double-counts disk and download
-budget, it breaks the "confirm closure before building" guarantee (the build now
-*has* a closure, so nothing reports the gap), and it makes every later audit answer
-a different question. When a build seems to require one, the real finding is a
-missing or incomplete store entry — report that.
+A second payload tree — per project, per build, per variant, **or per software** —
+is a second version of the truth. It goes stale silently, it double-counts disk and
+download budget, it breaks the "confirm closure before building" guarantee (the
+build now *has* a closure, so nothing reports the gap), and it makes every later
+audit answer a different question. A per-software store beside the real one is the
+same fork one level up: the software's consumer reads its private copy, the store
+sits there for the other software, and the two copies disagree by the next update.
+When a build or a program seems to require one, the real finding is a missing or
+incomplete store entry — report that.

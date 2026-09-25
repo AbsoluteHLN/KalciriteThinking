@@ -1,13 +1,13 @@
 ---
 name: kalcirite-project-rules
-description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, one converged dependency store per ecosystem that every project, build, and variant links into (no per-project or per-build payloads), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
+description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, one big dependency store folder per ecosystem that every project, build, variant, and software links into (no per-project, per-build, or per-software payloads; the store's top level stays closed), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
 whenToUse: "Working in or delegating work inside a repository that shares a machine-level dependency cache, a canonical UI source, or a shared tool catalogue; installing/building dependencies; resetting or extending a UI; deciding where a reusable plugin or tool belongs; reorganizing project structure and build output; or delegating to cheaper models. Also when adopting this skill on a new machine — that requires the first-run interview (§0.2) before any work."
 metadata:
-  version: "3.4"
+  version: "3.6"
   kind: "portable-rules"
   scope: "per-machine"
-  config: "PROJECT-BOUNDARY.md — project root, then this skill's directory, then the agent config root (§0.1)"
-  localProfile: "block between the kalcirite:local-profile markers below; empty means run the first-run interview (§0.2) first"
+  config: "PROJECT-BOUNDARY.md — project root, then the kalcirite-project-boundary skill, then this skill's directory, then the agent config root (§0.1)"
+  localProfile: "block between the kalcirite:local-profile markers below; empty is normal on a clean install (the values live in the kalcirite-project-boundary skill) — it is the last-resort fallback for hosts with no boundary file support"
   reference: "reference/ — interview, delegation, dependency-cache, ui-and-tools, host-adapters; read on demand"
 ---
 
@@ -21,9 +21,11 @@ Every machine-specific value — cache path, UI source, tool home, provider, por
 ## Local profile
 
 > **Empty — UNRESOLVED.** No machine values are recorded in this file yet.
-> Run the §0.2 first-run interview (`reference/interview.md`), write the answers
-> into this machine's config document, then export and install the boundary file
-> before doing any work.
+> On a two-skill machine that is normal: the values live in the sibling skill
+> `kalcirite-project-boundary` (§0.1, step 2). If no boundary file resolves at
+> all, run the §0.2 first-run interview (`reference/interview.md`), write the
+> answers into this machine's config document, then export and install before
+> doing any work.
 <!-- kalcirite:local-profile:end -->
 
 ---
@@ -35,16 +37,20 @@ Every machine-specific value — cache path, UI source, tool home, provider, por
 The **boundary file** is `PROJECT-BOUNDARY.md`. Use the first hit, in this order:
 
 1. **Project root** — `<project>/PROJECT-BOUNDARY.md` (or a `PROJECT-BOUNDARY` section in the project's `AGENTS.md` / `.kalcirite/boundary.md`). Highest priority: a project may override any machine value.
-2. **This skill's own directory** — `PROJECT-BOUNDARY.md` next to this `SKILL.md`. The installer writes it here, so it travels with the skill.
-3. **Agent config root** — the agent's own config/skills root, e.g. `$DSH_HOME/PROJECT-BOUNDARY.md` (DeepSeek Harness), `~/.claude/PROJECT-BOUNDARY.md` (Claude Code), `~/.codex/PROJECT-BOUNDARY.md` (Codex), `~/.config/<agent>/PROJECT-BOUNDARY.md`.
-4. **The local profile block above**, if it has been filled in.
-5. **Domain defaults** — the fallbacks written here as `<PLACEHOLDER>`.
+2. **The boundary skill** — `PROJECT-BOUNDARY.md` inside the sibling skill `kalcirite-project-boundary`, in the same skill root as this skill. This is the dedicated machine boundary on a **two-skill machine** (the recommended shape: the rules skill installed clean, the values skill beside it). Find the sibling by name through the host's skill catalog.
+3. **This skill's own directory** — `PROJECT-BOUNDARY.md` next to this `SKILL.md`. The single-skill installer writes it here, so it travels with the skill (legacy install shape; a machine may have it instead of the boundary skill).
+4. **Agent config root** — the agent's own config/skills root, e.g. `$DSH_HOME/PROJECT-BOUNDARY.md` (DeepSeek Harness), `~/.claude/PROJECT-BOUNDARY.md` (Claude Code), `~/.codex/PROJECT-BOUNDARY.md` (Codex), `~/.config/<agent>/PROJECT-BOUNDARY.md`.
+5. **The local profile block above**, if it has been filled in.
+6. **Domain defaults** — the fallbacks written here as `<PLACEHOLDER>`.
 
-A boundary file is the machine-config document's keyed rows plus a `kalcirite:answers` JSON block; the JSON is authoritative. Never invent a path, port, version, or tool name: **verify before asserting**, existence first.
+When a machine has both step 2 and step 3, step 2 wins — it is the boundary's
+dedicated home. A boundary file is the machine-config document's keyed rows plus
+a `kalcirite:answers` JSON block; the JSON is authoritative. Never invent a path,
+port, version, or tool name: **verify before asserting**, existence first.
 
 ### 0.2 First-run interview — required before any work
 
-**Gate.** If no boundary file resolves, or it still contains `<PLACEHOLDER>` / `<…>` tokens, or the local profile above says UNRESOLVED — **stop and interview the user first**. Do not edit, build, install, reorganise, or delete anything until the answers are written back: this document knows the rules, not the machine.
+**Gate.** Proceed only when a boundary file resolves by §0.1 with no `<PLACEHOLDER>` / `<…>` tokens, **or** the local profile above has been filled in. Otherwise — **stop and interview the user first**. Do not edit, build, install, reorganise, or delete anything until the answers are written back: this document knows the rules, not the machine. An empty local profile is not by itself a reason to stop: on a two-skill install the values live in the boundary skill (§0.1 step 2), not in this file.
 
 Ask once, in one batch, in the user's language, each question carrying a **probed default** labelled *detected* or *guess*. The question table, probing methods, blank-handling rules, and the export/install flow are in **`reference/interview.md`**. Then:
 
@@ -53,9 +59,11 @@ Ask once, in one batch, in the user's language, each question carrying a **probe
    exporter for this (PowerShell; on any other host the agent writes the same file by
    hand — its exact shape is specified in `reference/interview.md`). The exporter's
    path is recorded in §0 of that document;
-3. **install** the rule text plus the boundary file into the host's skill root — a
-   plain directory copy any host can perform, with `PROJECT-BOUNDARY.md` next to
-   `SKILL.md`.
+3. **install** into the host's skill root — a plain directory copy any host can
+   perform. Two shapes: the **two-skill** shape (recommended) copies the rule
+   text clean and the machine values as the sibling skill `kalcirite-project-
+   boundary` beside it (§0.1 step 2); the **single-skill** shape (legacy) puts
+   `PROJECT-BOUNDARY.md` next to `SKILL.md` (§0.1 step 3).
 
 Never edit the generated boundary file — the next export overwrites it. **Blank is a legitimate answer**: it makes the rules stop and report for that domain, and never authorises guessing.
 
@@ -69,7 +77,7 @@ Never edit the generated boundary file — the next export overwrites it. **Blan
 ### 0.4 Non-negotiables
 
 - **Build first, verify once.** Do not loop build→verify→build.
-- **No per-project dependency installs.** One shared store, linked in — never a payload per project or per build.
+- **No per-project, per-build, or per-software dependency payloads.** One big store folder per ecosystem, linked in — the store's own top level stays closed too.
 - **Reuse before rebuild.** UI and tools are found, not re-invented.
 - **No claim without evidence.** Unobserved capability is unverified capability.
 - **No work before the machine is known.** Interview first (§0.2), then act.
@@ -100,19 +108,20 @@ Full procedure, the host-facts table, and a reusable prompt skeleton: **`referen
 
 ---
 
-## 3. One dependency store — converged, shared, never per-build
+## 3. One dependency store — one big folder, converged, never per-build, never per-software
 
-`<DEP_CACHE>` is the single dependency root on this machine; if it is blank, no dependency work happens at all.
+`<DEP_CACHE>` is the single dependency root on this machine; if it is blank, no dependency work happens at all. Inside it there is **one big folder per ecosystem** — one pnpm store, one cargo registry, one npm cache, one pip cache, one electron cache — and every project, build target, variant, *and software* on this machine resolves its dependencies out of those same folders and links into them.
 
-**The rule is convergence, not caching.** Every project, build target, and variant on this machine resolves its dependencies out of the **same** store — one pnpm store, one cargo registry, one npm cache, one shared `node_modules`-like tree — and links into it. *One folder with its own dependencies per build* is the defect this rule forbids: N payload trees are N versions of the truth, and they drift apart.
+**The rule is convergence, not caching.** *One folder with its own dependencies per build* is the defect this rule forbids — and so is *one sibling folder per software* ("the dependencies of X") placed next to the real store: N payload trees, or N per-software forks, are N versions of the truth, and they drift apart. Convergence runs down two axes at once: across projects/builds/variants, **and** across the software that lives on the machine.
 
 1. **Query the store first** for every install, resolve, or download. A hit is used as-is; no online reinstall.
-2. **Exactly one store per ecosystem, and no second payload tree anywhere.** A per-project `node_modules`, a per-build `.venv`, a per-variant `vendor/`, a per-target copy of a package store — same defect, whichever directory it lands in, including inside `<BUILD_ROOT>`.
+2. **Exactly one store per ecosystem, and no second payload tree anywhere.** A per-project `node_modules`, a per-build `.venv`, a per-variant `vendor/`, a per-target copy of a package store — same defect, whichever directory it lands in, including inside `<BUILD_ROOT>`. A per-software sibling at the top level of the store (a virtual store or payload named after one program) is the same defect one level up.
 3. **Consumers link, they do not copy** — a junction, symlink, or configured pointer at most, resolving into the store. Shared **bytes**, not a nominal "it is cached too".
-4. **Never clean, delete, reorganise, or overwrite the store**, and never delete a *linked* dependency directory — a recursive delete punches through the junction into the shared store.
-5. **Confirm closure before building.** Unsatisfiable closure → **stop and report the missing list**; "reinstall dependencies" is not a repair step. Fetching is an exception needing explicit human authorisation, and the payload still lands in the store.
+4. **The store's top level is closed and documented.** A top-level entry in `<DEP_CACHE>` is an ecosystem store/cache, or declared infrastructure (runtimes, build caches, quarantine). The store keeps a guide at its root listing every entry and what may write there; a new top-level payload named after a software or a project is a failure signal, exactly like a `node_modules` inside a project.
+5. **Never clean, delete, reorganise, or overwrite the store**, and never delete a *linked* dependency directory — a recursive delete punches through the junction into the shared store.
+6. **Confirm closure before building.** Unsatisfiable closure → **stop and report the missing list**; "reinstall dependencies" is not a repair step. Fetching is an exception needing explicit human authorisation, and the payload still lands in the store.
 
-Where the store is, how to prove convergence, and the hit/miss/fetch protocol: **`reference/dependency-cache.md`**.
+Where the store is, how to prove convergence, the closed top-level contract, and the hit/miss/fetch protocol: **`reference/dependency-cache.md`**.
 
 ---
 
@@ -186,7 +195,7 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 - **Starting any edit, build, install, or deletion while the boundary is unresolved** — `<PLACEHOLDER>` tokens present, no boundary file, or an empty local profile block. Interview first (§0.2).
 - Installing dependencies inside a project, or fetching from the network when the store could satisfy the closure.
 - Deleting a linked dependency directory, or running a "clean" command against store-backed artifacts.
-- Creating a dependency payload — a second store, or a folder with its own dependencies per project, build, target, or variant.
+- Creating a dependency payload — a second store, or a folder with its own dependencies per project, build, target, variant, or software (including a per-software store placed beside the real one at the top level of the dependency cache).
 - Sending judgement work to a cheap model to save money (architecture, trade-offs, security).
 - Faking model routing with fields the session does not expose.
 - Hand-writing colour constants or starting a parallel design language.
