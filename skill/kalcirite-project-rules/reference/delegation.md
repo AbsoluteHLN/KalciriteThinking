@@ -114,7 +114,10 @@ Recording the answers, per host shape:
 Write them to **two** places: the machine-config document's model-routing section (the full
 key set), and the loaded `SKILL.md`'s `kalcirite:local-profile` block (at least
 `ROUTE_PROVIDER`, `CHEAP_MODELS`, `ROUTE_TOOL`, `ROUTE_SELECTION_SUPPORTED`). The
-[`interview.md`](interview.md) question 6 walks through them.
+[`interview.md`](interview.md) question 6 walks through them. Per-host install,
+routing, and enforcement detail: [`hosts/`](hosts/) (one page per known host);
+the host interview's answer sheets ship in the rules repository's
+`boundary/hosts/`.
 
 ## A delegation prompt that survives
 

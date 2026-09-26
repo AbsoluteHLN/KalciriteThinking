@@ -8,7 +8,7 @@ metadata:
   scope: "per-machine"
   config: "PROJECT-BOUNDARY.md — project root, then the kalcirite-project-boundary skill, then this skill's directory, then the agent config root (§0.1)"
   localProfile: "block between the kalcirite:local-profile markers below; empty is normal on a clean install (the values live in the kalcirite-project-boundary skill) — it is the last-resort fallback for hosts with no boundary file support"
-  reference: "reference/ — interview, delegation, dependency-cache, ui-and-tools, host-adapters; read on demand"
+  reference: "reference/ — interview, delegation, dependency-cache, ui-and-tools, host-adapters, hosts/; read on demand"
 ---
 
 # Kalcirite project rules (portable)
@@ -47,6 +47,10 @@ When a machine has both step 2 and step 3, step 2 wins — it is the boundary's
 dedicated home. A boundary file is the machine-config document's keyed rows plus
 a `kalcirite:answers` JSON block; the JSON is authoritative. Never invent a path,
 port, version, or tool name: **verify before asserting**, existence first.
+
+Per-host install, routing, and enforcement detail lives in `reference/hosts/` — one
+page per known host; `HOST_AGENT` picks the page, and a host without a page is
+recorded as such (unknown host, prompt-level enforcement only).
 
 ### 0.2 First-run interview — required before any work
 
@@ -204,6 +208,6 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 
 ---
 
-*Read on demand: `reference/interview.md` (unresolved boundary or changed machine), `reference/delegation.md` (delegating, routing, handoff), `reference/dependency-cache.md` (installs and repair), `reference/ui-and-tools.md` (UI, catalogue, adapters), `reference/host-adapters.md` (writing an adapter for a host).*
+*Read on demand: `reference/interview.md` (unresolved boundary or changed machine), `reference/delegation.md` (delegating, routing, handoff), `reference/dependency-cache.md` (installs and repair), `reference/ui-and-tools.md` (UI, catalogue, adapters), `reference/host-adapters.md` (writing an adapter for a host), `reference/hosts/` (per-host install, routing, and enforcement detail).*
 
 *KalciriteThinking — portable edition. Machine-specific values belong in `PROJECT-BOUNDARY.md`; procedures belong in `reference/`. Keep this file environment-neutral when editing it: every path it names must ship inside this skill directory, and anything outside it is referred to by name through the machine-config document, never by a repository-relative path.*

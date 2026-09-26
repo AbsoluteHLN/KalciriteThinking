@@ -6,20 +6,28 @@ Implements the adapter contract shipped with the rule text as
 the reference adapter lives in the shared tool catalogue as
 `agent-adapters/dsh-kalcirite-boundary`.
 
-Install shape produced by `scripts/install-skill.ps1`:
+Install shape produced by `scripts/install-skill.ps1` (two-skill shape):
 
 ```
 <DSH_HOME>\
 ├─ settings.yaml
 └─ skills\
-   └─ kalcirite-project-rules\
-      ├─ SKILL.md                            <- carries the filled local-profile block
-      ├─ PROJECT-BOUNDARY.md                 <- resolves per skill §0.1, 2nd place
-      └─ reference\                          <- procedures, read on demand
+   ├─ kalcirite-project-rules\               <- clean install (empty local profile)
+   │  ├─ SKILL.md
+   │  └─ reference\                          <- procedures + hosts/, read on demand
+   └─ kalcirite-project-boundary\            <- the machine values
+      ├─ SKILL.md
+      └─ PROJECT-BOUNDARY.md                 <- §0.1 step 2
 ```
 
-The installer copies the rule text, copies the exported boundary file **verbatim**,
-and fills the local-profile block. It never generates boundary values.
+The installer copies the rule text; in the single-skill shape it also copies
+the exported boundary file **verbatim** and fills the local-profile block. It
+never generates boundary values.
+
+Legacy single-skill shape: the boundary file sits beside `SKILL.md` in the
+rules skill directory (§0.1 step 3) and the local-profile block is filled;
+the adapter tries the boundary skill directory first, then the rules skill
+directory, per skill root.
 
 ## The adapter
 
