@@ -7,6 +7,34 @@ changed, so a version bump is never the only signal.
 Versioning is on the **portable rule text**, not on the repository: a layout change
 or a README rewrite does not move it, a change to the discipline does.
 
+## 3.8
+
+**Verification goes through the real input path, and fixes converge.** 3.7
+gated *reporting* on evidence; 3.8 gates the *method*: an experiment that only
+reaches a stand-in (a synthetic event, a source file instead of the served
+artifact, a hidden-chrome screenshot) cannot verify user-facing behaviour, and
+an override-shaped fix that leaves older layers armed is a regression waiting
+to happen. Grown out of a real chain where three historical CSS clamp layers
+plus a kept `overscroll-behavior: contain` ate every wheel event after an
+inner scroll owner was removed — programmatic scroll worked, real input did
+not, and only driving the host's real input protocol settled it.
+
+- **New `reference/verification-and-debugging.md`**: synthetic-vs-real input
+  (real input through the host's automation protocol for events, served
+  artifacts vs source files, don't measure with hidden chrome), override
+  archaeology (enumerate every rule reaching a selector before editing;
+  converge instead of stacking), regression attribution (assume your own last
+  change first, walk the consequence chain), falsify-before-fixing triage with
+  recorded exclusions, silent-mechanics list (`overflow-x: hidden` forces
+  `overflow-y: visible` to compute to `auto`; `overscroll-behavior: contain`
+  on a non-scrollable container eats wheel chaining; `scroll-behavior: smooth`
+  makes `scrollTo` async), and the evidence-file shape.
+- **`SKILL.md` §8** carries the discipline in brief: real-input verification,
+  served-artifact checks, enumerate-before-edit, first-suspect-your-own-change,
+  falsify-before-fixing; the footer and the frontmatter `reference` field
+  point to the new page. Rule text stays environment-neutral; the failure
+  stories behind the mechanics are generalised, no machine values.
+
 ## 3.7
 
 **The store is the only place dependencies are installed and used from.** 3.6

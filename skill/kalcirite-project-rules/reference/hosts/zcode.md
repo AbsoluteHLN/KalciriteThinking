@@ -30,10 +30,19 @@ Read this when `HOST_AGENT` says ZCode. Measured on a Windows install
   against the boundary's `ROUTE_PROVIDER` / `CHEAP_MODELS`: when they match, the
   routing values transfer to ZCode unchanged; when they do not, re-interview
   the routing keys for this host.
-- Delegation tools with a per-call model choice: **not observed** in this
-  install. Record `DELEGATION_TOOLS = none`, `ROUTE_SELECTION_SUPPORTED = none`,
-  and degrade per §2 — work inline or accept the inherited route; never
-  fabricate `provider` / `model` fields.
+- Delegation tools with a per-call model choice: **not observed** in the
+  2026-09-26 install. Record `DELEGATION_TOOLS = none`,
+  `ROUTE_SELECTION_SUPPORTED = none`, and degrade per §2 — work inline or
+  accept the inherited route; never fabricate `provider` / `model` fields.
+- **2026-09-27 re-probe (the upgrade the row above asked for):** an `Agent`
+  delegation tool now exists with typed subagents (`subagent_type`), typed
+  judge agents for document/chart acceptance, a model-discovery tool, and a
+  per-workflow `subagent_model` override. Treat delegation as **present but
+  best-effort**: a spawn can fail at runtime for account/plan reasons
+  ("account connection unavailable") with no model selected. The degrade path
+  is unchanged — fall back to doing the work inline (e.g. self-inspect the
+  artifact the judge agent would have reviewed), and record the failed
+  delegation in the evidence file. Re-probe the six facts on every upgrade.
 - Bot integrations (`~/.zcode\v2\bot-config.json`) can pin a model per bot via
   their `model` command.
 - Effect timing of a provider-config edit: **unverified** — assume

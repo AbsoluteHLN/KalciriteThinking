@@ -3,12 +3,12 @@ name: kalcirite-project-rules
 description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, one big dependency store folder per ecosystem that is the only place dependencies are installed and used from, with every project, build, variant, and software linking into it (no per-project, per-build, or per-software payloads; the store's top level stays closed), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
 whenToUse: "Working in or delegating work inside a repository that shares a machine-level dependency cache, a canonical UI source, or a shared tool catalogue; installing/building dependencies; resetting or extending a UI; deciding where a reusable plugin or tool belongs; reorganizing project structure and build output; or delegating to cheaper models. Also when adopting this skill on a new machine — that requires the first-run interview (§0.2) before any work."
 metadata:
-  version: "3.7"
+  version: "3.8"
   kind: "portable-rules"
   scope: "per-machine"
   config: "PROJECT-BOUNDARY.md — project root, then the kalcirite-project-boundary skill, then this skill's directory, then the agent config root (§0.1)"
   localProfile: "block between the kalcirite:local-profile markers below; empty is normal on a clean install (the values live in the kalcirite-project-boundary skill) — it is the last-resort fallback for hosts with no boundary file support"
-  reference: "reference/ — interview, delegation, dependency-cache, ui-and-tools, host-adapters, hosts/; read on demand"
+  reference: "reference/ — interview, delegation, dependency-cache, ui-and-tools, verification-and-debugging, host-adapters, hosts/; read on demand"
 ---
 
 # Kalcirite project rules (portable)
@@ -189,8 +189,13 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 
 - Claims of success require an observable artifact — build log, test output, path check, screenshot — written into `<EVIDENCE>`. Verification is **one central pass after the build is complete**, not a running commentary of partial checks.
 - Distinguish clearly: **verified**, **attempted**, **not attempted**. Never present the third as the first. If a capability could not be observed (route unavailable, service down, no session), say so and name what would confirm it.
+- Verification goes through the **real input path**: a synthetic event, a mocked caller, or a hand-invoked function exercises your code, not the user's. Where behaviour depends on native defaults (scrolling, focus, media), drive the real input via the host's automation protocol and say in the evidence which path was exercised. Likewise read the **served artifact**, not the source file, whenever a bundler or dev server stands between the two.
+- Before editing an override-shaped rule, **enumerate every declaration that can reach the selector** (sources, compiled output, upstream bundle) and resolve the cascade triplet — specificity, order, importance; the winner explains the behaviour. Fix by converging to one correct rule, not by stacking another override.
+- When behaviour "broke after a change", suspect the most recent edit first and walk its consequence chain, including rules adjacent to the ones touched.
+- Triage an anomaly before fixing it: defect, deliberate design, or transient. Record exclusions in the evidence file with the same rigour as fixes.
 - Paths, ports, toolchain versions, data directories: **verify, then state** — never assert from memory. A path that "should" exist is a hypothesis; `Test-Path` / `test -e` is the fact.
 - When a documented path no longer exists, replace the reference with the current source of truth and record the change; do not keep following a stale document. Machine-specific facts (paths, proxy addresses, accounts, ports) belong in the boundary file, **not** in reusable rule text.
+- Method detail — real-input recipes, override archaeology, silent CSS mechanics, evidence-file shape — lives in `reference/verification-and-debugging.md`; read it when diagnosing a regression or writing a fix's verification.
 
 ---
 
@@ -208,6 +213,6 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 
 ---
 
-*Read on demand: `reference/interview.md` (unresolved boundary or changed machine), `reference/delegation.md` (delegating, routing, handoff), `reference/dependency-cache.md` (installs and repair), `reference/ui-and-tools.md` (UI, catalogue, adapters), `reference/host-adapters.md` (writing an adapter for a host), `reference/hosts/` (per-host install, routing, and enforcement detail).*
+*Read on demand: `reference/interview.md` (unresolved boundary or changed machine), `reference/delegation.md` (delegating, routing, handoff), `reference/dependency-cache.md` (installs and repair), `reference/ui-and-tools.md` (UI, catalogue, adapters), `reference/verification-and-debugging.md` (real-input verification, override archaeology, regression attribution), `reference/host-adapters.md` (writing an adapter for a host), `reference/hosts/` (per-host install, routing, and enforcement detail).*
 
 *KalciriteThinking — portable edition. Machine-specific values belong in `PROJECT-BOUNDARY.md`; procedures belong in `reference/`. Keep this file environment-neutral when editing it: every path it names must ship inside this skill directory, and anything outside it is referred to by name through the machine-config document, never by a repository-relative path.*

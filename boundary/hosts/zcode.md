@@ -28,8 +28,8 @@ The six host facts, answered for ZCode:
 
 | Fact | ZCode |
 |---|---|
-| delegation tools | none observed in the measured install → `DELEGATION_TOOLS = none` (re-probe on upgrade) |
-| can a delegation pick a model | n/a — `ROUTE_SELECTION_SUPPORTED = none`; work inline or accept the inherited route, never fabricate `provider` / `model` fields |
+| delegation tools | 2026-09-26 install: none observed → `DELEGATION_TOOLS = none`. **2026-09-27 re-probe:** an `Agent` tool with typed subagents (incl. acceptance judges) and a per-workflow `subagent_model` override now exists — treat as **best-effort**: spawns can fail at runtime for account/plan reasons; fall back to inline work and record the failed delegation |
+| can a delegation pick a model | base install: n/a (`ROUTE_SELECTION_SUPPORTED = none`); 2026-09-27: a per-workflow `subagent_model` override exists, and typed subagents may still fail at runtime with no model — degrade per §2, never fabricate `provider` / `model` fields |
 | route discovery | `<userprofile>\.zcode\v2\provider_config.json` — `personalModelIds` / `modelOrder` per provider |
 | enabling route selection | the model choice is the provider config (model order), not a delegation setting → `ROUTE_ENABLE_SETTING = v2\provider_config.json (modelOrder)` |
 | when it takes effect | unverified — assume new session / restart and confirm before claiming |
