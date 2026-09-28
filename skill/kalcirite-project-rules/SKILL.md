@@ -1,9 +1,9 @@
 ---
 name: kalcirite-project-rules
-description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, one big dependency store folder per ecosystem that is the only place dependencies are installed and used from, with every project, build, variant, and software linking into it (no per-project, per-build, or per-software payloads; the store's top level stays closed), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-before-verify ordering, archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
+description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, one big dependency store folder per ecosystem that is the only place dependencies are installed and used from, with every project, build, variant, and software linking into it (no per-project, per-build, or per-software payloads; the store's top level stays closed), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-first, verify-once ordering (no verification loops — a check that already passed is not re-run on unchanged code), archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
 whenToUse: "Working in or delegating work inside a repository that shares a machine-level dependency cache, a canonical UI source, or a shared tool catalogue; installing/building dependencies; resetting or extending a UI; deciding where a reusable plugin or tool belongs; reorganizing project structure and build output; or delegating to cheaper models. Also when adopting this skill on a new machine — that requires the first-run interview (§0.2) before any work."
 metadata:
-  version: "3.8"
+  version: "3.9"
   kind: "portable-rules"
   scope: "per-machine"
   config: "PROJECT-BOUNDARY.md — project root, then the kalcirite-project-boundary skill, then this skill's directory, then the agent config root (§0.1)"
@@ -80,7 +80,7 @@ Never edit the generated boundary file — the next export overwrites it. **Blan
 
 ### 0.4 Non-negotiables
 
-- **Build first, verify once.** Do not loop build→verify→build.
+- **Build first, verify once — and only once.** Do not loop build→verify→build, and do not re-verify a module that has already passed while nothing has changed: a passed check is valid until a change touches what it covers.
 - **Dependencies are installed and used only in the shared store.** One big store folder per ecosystem; consumers link in, and nothing outside the store installs or holds a payload — the store's own top level stays closed too.
 - **Reuse before rebuild.** UI and tools are found, not re-invented.
 - **No claim without evidence.** Unobserved capability is unverified capability.
@@ -93,7 +93,7 @@ Never edit the generated boundary file — the next export overwrites it. **Blan
 1. **Locate** — project root, boundary file, target module. Verify every path you are about to depend on.
 2. **Recon reuse surface** — does `<DEP_CACHE>` satisfy the closure? Does `<TOOL_HOME>` have the capability? Does `<UI_SOURCE>` have the component?
 3. **Build first** — make the change complete, then build, and confirm the artifact landed in `<BUILD_ROOT>`.
-4. **Verify once, centrally** — run the project's own check scripts; write command, timestamp, result, and raw failure text into `<EVIDENCE>`.
+4. **Verify once, centrally** — run the project's own check scripts; write command, timestamp, result, and raw failure text into `<EVIDENCE>`. Re-running a green check on unchanged code is the verification-loop defect (§8), not diligence.
 5. **Delegate the cheap parts** — bulk reading, per-file sweeps, doc drafting (`reference/delegation.md`); the main session keeps design, judgement, and final adjudication.
 6. **Archive on change** — outdated files go to `archive/` under their own subtree, or are safely deleted (§7).
 7. **Report** — changed files with paths, evidence paths, unverified items, residual risk, next step.
@@ -188,6 +188,7 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 ## 8. Evidence-gated reporting, on a verified fact baseline
 
 - Claims of success require an observable artifact — build log, test output, path check, screenshot — written into `<EVIDENCE>`. Verification is **one central pass after the build is complete**, not a running commentary of partial checks.
+- **No verification loops.** Repeatedly re-verifying a small module that has already passed — re-running the same check several times "to be safe", with no change in between — is a **prohibited error behaviour**: it burns budget and adds no evidence. A passing check stands until a change touches its scope; then, and only then, run it again — once.
 - Distinguish clearly: **verified**, **attempted**, **not attempted**. Never present the third as the first. If a capability could not be observed (route unavailable, service down, no session), say so and name what would confirm it.
 - Verification goes through the **real input path**: a synthetic event, a mocked caller, or a hand-invoked function exercises your code, not the user's. Where behaviour depends on native defaults (scrolling, focus, media), drive the real input via the host's automation protocol and say in the evidence which path was exercised. Likewise read the **served artifact**, not the source file, whenever a bundler or dev server stands between the two.
 - Before editing an override-shaped rule, **enumerate every declaration that can reach the selector** (sources, compiled output, upstream bundle) and resolve the cascade triplet — specificity, order, importance; the winner explains the behaviour. Fix by converging to one correct rule, not by stacking another override.
@@ -202,6 +203,7 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 ## 9. Red lines
 
 - **Starting any edit, build, install, or deletion while the boundary is unresolved** — `<PLACEHOLDER>` tokens present, no boundary file, or an empty local profile block. Interview first (§0.2).
+- Re-verifying a small module repeatedly after it has already passed, with no change in between — the verification loop ("again, just to be safe").
 - Using or installing dependencies anywhere but the shared store — a project-local payload, a per-software sibling store, or the package manager's own default location — or fetching from the network when the store could satisfy the closure.
 - Deleting a linked dependency directory, or running a "clean" command against store-backed artifacts.
 - Creating a dependency payload — a second store, or a folder with its own dependencies per project, build, target, variant, or software (including a per-software store placed beside the real one at the top level of the dependency cache).

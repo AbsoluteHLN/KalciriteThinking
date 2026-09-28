@@ -7,6 +7,26 @@ changed, so a version bump is never the only signal.
 Versioning is on the **portable rule text**, not on the repository: a layout change
 or a README rewrite does not move it, a change to the discipline does.
 
+## 3.9
+
+**No verification loops.** "Build first, verify once" is strengthened from a
+working order into a prohibited-behaviour rule: repeatedly re-verifying a small
+module that has already passed — re-running the same check several times "to be
+safe" with no change in between — is a defect, not diligence. A passing check is
+valid until a change touches what it covers; then, and only then, run it again,
+once.
+
+- **`SKILL.md`**: the 0.4 non-negotiable becomes "build first, verify once — and
+  only once" and states when a passed check stays valid; 1.4 names re-running a
+  green check on unchanged code as the verification-loop defect; a new 8 bullet
+  bans the loop explicitly ("prohibited error behaviour") and names the cost
+  (budget burned, no new evidence); a new 9 red line: re-verifying a small module
+  repeatedly after it has passed, with no change in between.
+- Frontmatter description: "build-before-verify ordering" becomes "build-first,
+  verify-once ordering (no verification loops)".
+- Complements 3.8: 3.8 says *how* a verification must be done (real input path,
+  converging fixes); 3.9 says *how often* — once per change, never in a loop.
+
 ## 3.8
 
 **Verification goes through the real input path, and fixes converge.** 3.7
