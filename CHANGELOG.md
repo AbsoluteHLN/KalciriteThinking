@@ -7,6 +7,44 @@ changed, so a version bump is never the only signal.
 Versioning is on the **portable rule text**, not on the repository: a layout change
 or a README rewrite does not move it, a change to the discipline does.
 
+## 3.11
+
+**Physical convergence: one copy of the bytes, however many paths.** 3.3–3.7 converged
+the *layout* (one store per ecosystem, consumers linked, closed top level). 3.11
+extends the same rule one level down, into the store's own trees: identical content
+exists once, as shared physical bytes. A second physical copy of bytes the store
+already holds double-counts disk, drifts, and hides the machine's real dependency
+footprint.
+
+- **`SKILL.md`** 0.4 and §3 rule 3: "consumers link, they do not copy" now also
+  covers the store's interior — a file whose content the store already holds is a
+  hard link, never a second copy; audit *physical* bytes (hard-linked files count
+  once); consolidation is link-first-then-rename, never delete-first.
+- **`reference/dependency-cache.md`**: a canonical folder-shape table (one ecosystem
+  root, one folder per role — `pnpm/store|vstore|home|cache`, `npm-cache/_cacache`,
+  the npm global **prefix** as one entry, `cargo/registry|git|targets|build`,
+  `rustup/toolchains`, binary caches, infrastructure runtimes, `shared/`,
+  `profiles/`, read-only `quarantine/`), hard rule 9 (no unlinked duplicate inside
+  the store), a **Physical convergence** section (logical ≠ physical; link-don't-copy;
+  link-first-then-rename; the content-addressed store filename *is* the SHA-512, so
+  membership is one hash plus one stat; leave mutable/regenerable files alone), and a
+  portable physical-bytes audit snippet.
+- Frontmatter description carries the physical-convergence phrase.
+
+## 3.10
+
+**Parallel implementation batches with explicit interface convergence.** Multi-module
+implementation now dispatches independent code-writing work concurrently, with
+parent-owned contracts, disjoint file ownership, actual source-delta supervision,
+and one centralized batch verification after integration.
+
+- `SKILL.md` §1/§2 now distinguish concurrent implementation from serial
+  per-module verification and keep architecture, shared contracts, and final
+  adjudication with the parent.
+- `reference/delegation.md` adds the implementation-batch protocol, stall
+  redirection, and the rule that fuzzy model substitution must remain within any
+  strict configured allowlist.
+
 ## 3.9
 
 **No verification loops.** "Build first, verify once" is strengthened from a

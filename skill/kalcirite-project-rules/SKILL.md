@@ -1,9 +1,8 @@
 ---
 name: kalcirite-project-rules
-description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing and self-contained session handoff, one big dependency store folder per ecosystem that is the only place dependencies are installed and used from, with every project, build, variant, and software linking into it (no per-project, per-build, or per-software payloads; the store's top level stays closed), a canonical UI source with token-only styling, a shared plugin/tool catalogue before any new build, a fixed clean project layout with one build-output root, build-first, verify-once ordering (no verification loops — a check that already passed is not re-run on unchanged code), archive-on-change hygiene, and evidence-gated claims. Load before working in any repository that follows these boundaries."
-whenToUse: "Working in or delegating work inside a repository that shares a machine-level dependency cache, a canonical UI source, or a shared tool catalogue; installing/building dependencies; resetting or extending a UI; deciding where a reusable plugin or tool belongs; reorganizing project structure and build output; or delegating to cheaper models. Also when adopting this skill on a new machine — that requires the first-run interview (§0.2) before any work."
+description: "Portable engineering discipline for multi-project agent work: cost-tiered model routing, parallel implementation across independent modules with parent-owned interface convergence, self-contained session handoff, one shared dependency store whose bytes are physically converged (identical content is linked, never copied twice), a canonical token-based UI source, shared tools, clean build/temp roots, build-first verify-once ordering, archive-on-change hygiene, and evidence-gated claims. Use before working in or delegating inside repositories that share a machine-level dependency cache, canonical UI source, or shared tool catalogue; also when installing/building dependencies, consolidating a dependency store, extending a UI, locating reusable tools, reorganizing project/build output, or adopting this skill on a new machine (run the first-run interview in §0.2 before work)."
 metadata:
-  version: "3.9"
+  version: "3.11"
   kind: "portable-rules"
   scope: "per-machine"
   config: "PROJECT-BOUNDARY.md — project root, then the kalcirite-project-boundary skill, then this skill's directory, then the agent config root (§0.1)"
@@ -81,7 +80,7 @@ Never edit the generated boundary file — the next export overwrites it. **Blan
 ### 0.4 Non-negotiables
 
 - **Build first, verify once — and only once.** Do not loop build→verify→build, and do not re-verify a module that has already passed while nothing has changed: a passed check is valid until a change touches what it covers.
-- **Dependencies are installed and used only in the shared store.** One big store folder per ecosystem; consumers link in, and nothing outside the store installs or holds a payload — the store's own top level stays closed too.
+- **Dependencies are installed and used only in the shared store.** One big store folder per ecosystem; consumers link in, and nothing outside the store installs or holds a payload — and inside the store, one physical copy per content: identical bytes are hard-linked, never copied twice. The store's own top level stays closed too.
 - **Reuse before rebuild.** UI and tools are found, not re-invented.
 - **No claim without evidence.** Unobserved capability is unverified capability.
 - **No work before the machine is known.** Interview first (§0.2), then act.
@@ -94,7 +93,7 @@ Never edit the generated boundary file — the next export overwrites it. **Blan
 2. **Recon reuse surface** — does `<DEP_CACHE>` satisfy the closure? Does `<TOOL_HOME>` have the capability? Does `<UI_SOURCE>` have the component?
 3. **Build first** — make the change complete, then build, and confirm the artifact landed in `<BUILD_ROOT>`.
 4. **Verify once, centrally** — run the project's own check scripts; write command, timestamp, result, and raw failure text into `<EVIDENCE>`. Re-running a green check on unchanged code is the verification-loop defect (§8), not diligence.
-5. **Delegate the cheap parts** — bulk reading, per-file sweeps, doc drafting (`reference/delegation.md`); the main session keeps design, judgement, and final adjudication.
+5. **Parallelize independent implementation** — dispatch bounded code-writing tasks concurrently behind parent-owned interfaces; keep file ownership disjoint and integrate before the single central verification pass (`reference/delegation.md`).
 6. **Archive on change** — outdated files go to `archive/` under their own subtree, or are safely deleted (§7).
 7. **Report** — changed files with paths, evidence paths, unverified items, residual risk, next step.
 
@@ -102,11 +101,15 @@ Never edit the generated boundary file — the next export overwrites it. **Blan
 
 ## 2. Cost-tiered routing and session handoff
 
-Route by **required reasoning depth**, not by task size. Design, architecture, trade-offs, security, and final adjudication stay on the strong/parent route; bulk reading, mechanical refactors, log triage, extraction, and doc drafting go to the cheapest capable route.
+Route by **required reasoning depth**, not by task size. Design, architecture, cross-module contracts, security, and final adjudication stay on the strong/parent route. For multi-module implementation, the parent owns those decisions and delegates actual code-writing to independent subagents concurrently; bulk reading, mechanical refactors, log triage, extraction, and doc drafting may also use the cheapest capable route.
 
 - **Discover the route, never guess it**, and never leave the provider named in the boundary file. Prefer the configured **model id** over a display name; fuzzy-match the nearest cheap sibling when the exact id is absent, and report the substitution.
 - **Verify the capability before using it.** If the delegation tool does not expose `provider` / `model`, it does not exist for this session: delegate on the inherited route or work inline, and report model selection as unavailable. Never fabricate the fields, and do not edit settings mid-session hoping it applies.
-- **Every delegation is self-contained** — context, one bounded deliverable, read/write boundary, absolute target path, acceptance test, forbidden traps. A child does not see this conversation.
+- **Parallel means concurrent implementation, not a serial queue.** When unfinished modules are independent, launch their bounded code tasks in the same batch; do not wait for one module's verification before starting the next. The parent defines shared API/data/error/event contracts, reserves cross-cutting files for integration, and gives each child an exclusive write set.
+- **Delegate source work, not just commentary.** When the user asks for implementation, each build subtask must name an observable code change; a plan, audit, or "no issue found" report is not a substitute.
+- **Converge once.** After the batch's source changes are complete, the parent reconciles interfaces and runs the relevant build, tests, and end-to-end verification centrally once. Children report what they changed and how it connects; they do not self-certify the assembled system.
+- **Prevent stalls.** At the supervision interval defined by the user or machine boundary, inspect agent status and actual source diffs. If an agent has made no code progress for one interval, stop or redirect that work to a different independent module; after the same blocker recurs twice, record the observed blocker and move on rather than waiting or retrying in a loop.
+- **Every delegation is self-contained** — context, one bounded code deliverable, interface contract, exclusive read/write boundary, absolute target paths, acceptance conditions, and forbidden traps. A child does not see this conversation.
 
 Full procedure, the host-facts table, and a reusable prompt skeleton: **`reference/delegation.md`**.
 
@@ -120,7 +123,7 @@ Full procedure, the host-facts table, and a reusable prompt skeleton: **`referen
 
 1. **Only the store — query it first, and everything lands there.** Every install, resolve, and download goes to the store first; a hit is used as-is, and an authorised fetch (rule 6) lands in the store as well. A dependency used or installed anywhere else — a project-local payload, a per-software sibling, the package manager's own default location — is a violation, even when it "works".
 2. **Exactly one store per ecosystem, and no second payload tree anywhere.** A per-project `node_modules`, a per-build `.venv`, a per-variant `vendor/`, a per-target copy of a package store — same defect, whichever directory it lands in, including inside `<BUILD_ROOT>`. A per-software sibling at the top level of the store (a virtual store or payload named after one program) is the same defect one level up.
-3. **Consumers link, they do not copy** — a junction, symlink, or configured pointer at most, resolving into the store. Shared **bytes**, not a nominal "it is cached too".
+3. **Consumers link, they do not copy** — a junction, symlink, or configured pointer at most, resolving into the store. Shared **bytes**, not a nominal "it is cached too". The same holds *inside* the store: a file whose content the store already holds is a hard link, never a second physical copy — audit physical bytes (a hard-linked file counts once), because logical size double-counts links and hides the real footprint. Consolidation replaces a duplicate by linking it, always link-first-then-rename, never delete-first.
 4. **The store's top level is closed and documented.** A top-level entry in `<DEP_CACHE>` is an ecosystem store/cache, or declared infrastructure (runtimes, build caches, quarantine). The store keeps a guide at its root listing every entry and what may write there; a new top-level payload named after a software or a project is a failure signal, exactly like a `node_modules` inside a project.
 5. **Never clean, delete, reorganise, or overwrite the store**, and never delete a *linked* dependency directory — a recursive delete punches through the junction into the shared store.
 6. **Confirm closure before building.** Unsatisfiable closure → **stop and report the missing list**; "reinstall dependencies" is not a repair step. Fetching is an exception needing explicit human authorisation, and the payload still lands in the store.
@@ -209,6 +212,7 @@ Never ship a half-tool inside a consuming project, and never bypass the catalogu
 - Creating a dependency payload — a second store, or a folder with its own dependencies per project, build, target, variant, or software (including a per-software store placed beside the real one at the top level of the dependency cache).
 - Sending judgement work to a cheap model to save money (architecture, trade-offs, security).
 - Faking model routing with fields the session does not expose.
+- Serializing explicitly parallel, independent code tasks behind per-module verification, or giving multiple agents overlapping write ownership without a parent-owned integration contract.
 - Hand-writing colour constants or starting a parallel design language.
 - Asserting paths/ports/versions from memory instead of checking.
 - Claiming "verified" with nothing in `verify-evidence/`.

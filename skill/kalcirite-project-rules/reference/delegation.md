@@ -16,6 +16,43 @@ reasoning depth**, not by task size or by novelty.
 A cheap model asked to make a design decision is a cost saving that becomes a
 defect. A strong model used to grep forty files is the same mistake inverted.
 
+## Parallel implementation batches
+
+Use this mode when a request has multiple unfinished code areas that can progress
+without editing the same files or waiting on one another. A single-module change
+does not need artificial fan-out.
+
+1. The parent makes the architecture and cross-module decisions, then writes down
+   the shared contract before dispatch: entry point, input/output shape, errors,
+   state transitions, authorization, and any event or persistence semantics that
+   consumers depend on.
+2. Split the work by **exclusive file ownership**. Each child receives an absolute
+   write set and a clear "do not touch" list. Reserve shared integration files for
+   the parent or designate exactly one owner; do not let parallel agents improvise
+   competing interfaces.
+3. Give each child an implementation deliverable: source code plus a concise
+   handoff identifying changed files, public entry points, contract assumptions,
+   and unresolved integration needs. A review or plan alone does not satisfy a
+   coding assignment.
+4. Launch all independent implementation tasks before waiting for results. The
+   parent may implement a separate integration slice at the same time, provided
+   ownership does not overlap. Respect the machine's agent and concurrency limits.
+5. Supervise at the interval the user or boundary specifies. Check actual source
+   deltas, not just status messages. If a task has no code progress for one
+   interval, stop or redirect it to another independent deliverable. If the same
+   blocker recurs twice, record the concrete blocker and skip that dependency for
+   now rather than repeating reads, retries, or waits.
+6. Once all available source work is collected, the parent reconciles the shared
+   contracts and performs one batch-level build followed by the relevant tests and
+   end-to-end acceptance. Do not make each child run a build/verify cycle for its
+   module, and do not claim the assembled feature is verified from a child's
+   isolated result.
+
+If a dependency genuinely makes two tasks sequential, dispatch the independent
+work first and leave only the dependent integration step for after its contract
+is available. If shared-file ownership becomes unavoidable, stop concurrent edits
+to that file and make the parent the sole integrator.
+
 ## Routing procedure
 
 1. **Discover, never guess.** Call the catalog/discovery tool for subagent models
@@ -25,9 +62,11 @@ defect. A strong model used to grep forty files is the same mistake inverted.
    provider and its exact model ids. Names shown in a UI are often *display names*;
    the routing field usually needs the **configured id**. Read the config, do not
    transcribe the label.
-3. **Fuzzy-match when the exact name is absent** — match on family keywords (e.g.
-   `GLM`, `DeepSeek`, `Qwen`, `Flash`, `mini`, `small`) case-insensitively and pick
-   the nearest cheap sibling. Say which sibling you picked and why.
+3. **Fuzzy-match only when the boundary permits substitution** — match on family
+   keywords (e.g. `GLM`, `DeepSeek`, `Qwen`, `Flash`, `mini`, `small`) and pick the
+   nearest cheap sibling only if that route remains inside the configured
+   allowlist. Say which sibling you picked and why. A strict model/provider
+   allowlist is a hard ceiling, not a preference.
 4. **Never leave the authorised provider.** The boundary file names it (e.g. a
    campus/self-hosted gateway). Cross-provider guessing is a failure, not initiative.
 5. **Record the substitution** — if you used a different model than intended, say so

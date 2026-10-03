@@ -26,6 +26,27 @@ folder of dependencies per build, and not one sibling folder per software:
 | Python | the pip cache + the managed interpreter tree | site-packages live in the store; the project points at them |
 | Electron / bundlers | the binary caches (electron, electron-builder) | binaries are downloaded once, into the cache |
 
+### The canonical folder shape (relative to `<DEP_CACHE>`)
+
+Names differ per machine; the **shape** does not. One root folder per ecosystem, and
+inside it one folder per role — never a folder per project, per build, or per software:
+
+| Root folder | Sub-tree roles |
+|---|---|
+| `pnpm/` | `store/` — content-addressed payload; `vstore/` (or a project-level virtual store) — the shared virtual tree; `home/` — `PNPM_HOME` (shims, tools, config); `cache/` — package metadata; resolution views per dependency graph |
+| `npm-cache/` | `_cacache/` — HTTP/tarball cache |
+| `npm-global/` | the npm **prefix**: exactly one `node_modules/` plus its bin shims at the root (a prefix split across several top-level entries is a defect) |
+| `cargo/` | `registry/` — index + crate payload; `git/`; `bin/` — toolchain proxies; `targets/<project>/`, `build/<project>/` — build caches; `config.toml` |
+| `rustup/` | `toolchains/`, `settings.toml` |
+| `pip-cache/` | pip's HTTP cache |
+| `electron/`, `electron-builder/` | binary caches; extracted runtimes are shared inputs, not build output |
+| `ms-playwright/`, `node-gyp-cache/`, `ffmpeg/` | browser, header and binary caches |
+| `flutter/`, `vcpkg/` | language/package ecosystems with their own `sdks`/`downloads`/`packages` roles |
+| `node/`, `node-runtime/`, `corepack/` | **infrastructure** — interpreters and tooling homes, not dependency payloads |
+| `shared/` | shared virtual store, managed interpreter environments, shared runtimes |
+| `profiles/` | per-tool profile homes (declared infrastructure) |
+| `quarantine/` | holding area for incidents and removed duplicates — **read-only, only ever added to** |
+
 Three consequences — and a fourth that applies to the store's own top level:
 
 1. **One payload per ecosystem.** A second content-addressed store, a second
@@ -82,6 +103,12 @@ Three consequences — and a fourth that applies to the store's own top level:
 8. **Never delete a linked dependency directory** — deleting a junction
    recursively punches through into the shared store. Never run a toolchain's
    "clean" command on a store-backed build.
+9. **No unlinked duplicate inside the store either.** One store per ecosystem is
+   only half of convergence: inside it, identical content must exist **once**, as
+   shared physical bytes. A second physical copy of bytes that the store already
+   holds — the classic result of an install that ran while the store lived on
+   another volume — is the same defect one level down: it double-counts disk,
+   drifts, and hides the true size of the machine's dependency footprint.
 
 ## Pointer mechanisms (pick per ecosystem)
 
@@ -134,6 +161,51 @@ satisfied from the store (deleting a *linked* tree would punch into it).
 Bypass the package-manager script wrapper when it tries to re-verify and prune
 modules (a common way junctions get destroyed): call the tool binary directly
 (e.g. `node_modules/.bin/<tool> build`).
+
+## Physical convergence — one copy of the bytes, however many paths
+
+Layout convergence (one store, linked consumers) is only half of the rule: the trees
+inside the store must not carry the same content twice either.
+
+1. **Logical ≠ physical.** A tree that reports 2 GB may hold 2 GB or 2 MB of real
+   bytes, depending on hard links and junctions. Audit **physical** bytes: count a
+   file with more than one link once, never once per path, and never follow a
+   junction during the walk. A "huge" store is usually hard links and symlinks
+   being counted twice — measure before concluding anything.
+2. **Identical content is shared, never copied twice.** When a file inside the store
+   has the same bytes as one the store already holds (or as another file in the
+   store), replace it with a hard link — same volume — or a junction. This is the
+   mechanism the package managers already use; a real copy appears when the install
+   ran with its store on a different volume, or with a copy-style import method.
+3. **Replace safely: link first, then rename.** Create the new link under a
+   temporary name and rename it over the target, so the original disappears only
+   after a valid replacement exists. Never delete first and link second — a failure
+   between the two steps loses the file.
+4. **A content-addressed store names files by hash.** In pnpm's store the file path
+   is `<store>/<hash[0:2]>/<hash[2:]>`, where the concatenation is the content's
+   SHA-512 in hex. "Is this content already in the store?" is therefore one hash
+   plus one `stat` — no index lookup needed.
+5. **Leave mutable files alone.** Skip metadata that tools rewrite
+   (`package.json`, lockfiles, `.modules.yaml`), regenerable artefacts
+   (`.o`, `.rlib`, `.pyc`, logs, sqlite/log files) and build caches (`.vite`,
+   `.turbo`, `.next`, coverage) — linking those risks cross-contamination for
+   almost no space.
+
+Audit physical bytes (Node, portable):
+
+```js
+// node physical-bytes.mjs <DEP_CACHE>   — hard-linked files counted once
+import fs from 'node:fs'; import path from 'node:path';
+const root = process.argv[2]; const seen = new Set(); let bytes = 0;
+(function walk(d){ for (const e of fs.readdirSync(d,{withFileTypes:true})) {
+  const p = path.join(d, e.name); const st = fs.lstatSync(p);
+  if (st.isSymbolicLink()) continue;
+  if (st.isDirectory()) { walk(p); continue; }
+  if (st.nlink > 1) { const id = st.dev + ':' + st.ino; if (seen.has(id)) return; seen.add(id); }
+  bytes += st.size;
+} })(root);
+console.log((bytes / 1073741824).toFixed(3), 'GiB physical');
+```
 
 ## Failure protocol
 
